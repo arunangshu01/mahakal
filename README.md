@@ -93,9 +93,15 @@ All endpoints live under `/mahakal/api/v1`. Interactive docs: http://localhost:8
 | GET | `/auth/me` | Signed-in user or guest messages left, plus the Google client ID |
 | POST | `/auth/google` | `{"credential": "<Google ID token>"}` → signs in |
 | POST | `/auth/logout` | Signs out (guest message count is kept) |
+| DELETE | `/auth/account` | Deletes the signed-in user's profile, history and memories |
 | POST | `/chat` | `{"text": "..."}` → `{"reply", "audio_b64", "guest_remaining"}` |
+| GET | `/chat/stream` | Server-Sent Events reply stream; takes a `token` from `/chat/stream-token` |
+| POST | `/chat/stream-token` | Issues a short-lived token for `/chat/stream` |
 | POST | `/listen` | Multipart audio `file` → `{"transcript", "reply", "audio_b64", "guest_remaining"}` |
+| GET | `/conversation` | Your saved conversation history |
 | POST | `/reset` | Clears your conversation history |
+| GET | `/memories` | Your long-term memories |
+| DELETE | `/memories/{index}` | Deletes one memory |
 
 Errors use the shape `{"detail": {"error_message", "error_type"}}`: 401 `GuestLimitReachedError`
 when a guest must sign in, 429 when rate-limited, 502 when every AI provider failed, 503 when not configured.
@@ -112,11 +118,13 @@ cd frontend && npm test             # frontend (Vitest + Testing Library)
 Merging a PR into `main` runs CI; when it passes, `.github/workflows/deploy.yml` deploys the API to
 Cloud Run and the UI to Firebase Hosting. API keys live in Secret Manager, never in the repo; the
 app reads them at startup (`SECRETS_SOURCE=secret-manager`, see `backend/utility/secrets.py`).
-One-time setup: [docs/deploy-gcp.md](docs/deploy-gcp.md).
+One-time setup: [docs/deploy-gcp.md](docs/deploy-gcp.md). Uptime checks and email alerts are
+created by `deploy/setup-monitoring.sh` (see the monitoring section of that guide). Streaming
+replies go directly to the Cloud Run origin (`STREAM_API_ORIGIN`) because Firebase Hosting
+buffers SSE responses.
 
 ## Roadmap
 
-- [ ] Tool calling (weather, time, Spotify, file search)
-- [ ] Wake word (openWakeWord)
-- [ ] Long-term memories per user
-- [ ] Delete-my-account button
+- [ ] Tool calling: Spotify, file search (time, weather, Wikipedia, remember/forget already work)
+- [ ] Wake word on more browsers (currently uses Web Speech API: Chrome, Edge, Safari)
+- [ ] Custom domain

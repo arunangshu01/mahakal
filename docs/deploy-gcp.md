@@ -166,6 +166,19 @@ printf '%s' 'NEW_VALUE' | gcloud secrets versions add groq-api-key --data-file=-
 
 Then re-run the Deploy workflow; Cloud Run picks up `latest` on the new revision.
 
+## Monitoring
+
+`deploy/setup-monitoring.sh` creates an email notification channel, an uptime check on
+`https://mahakal-ai.web.app/mahakal/api/v1/health` (every 5 minutes from 3 regions), and two
+alert policies: site down and more than 5 server errors (5xx) in 5 minutes. Run it once:
+
+```bash
+ALERT_EMAIL=you@example.com deploy/setup-monitoring.sh
+```
+
+It is safe to re-run (existing items are reused). Change `PROJECT_ID`, `HOST` or `SERVICE` via
+the environment variables at the top of the script if they ever differ.
+
 ## Costs
 
 Cloud Run (scales to zero, max 3 instances), Firestore, Hosting, Secret Manager and Artifact Registry all
