@@ -1,0 +1,139 @@
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #00e5ff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: #02060d;
+  color: #d8f6ff;
+  font-family: 'Rajdhani', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+button {
+  font: inherit;
+}
+
+/* ---------- Theme: accent colour follows the assistant's status ---------- */
+.app {
+  --accent: #00e5ff;
+  --accent-rgb: 0, 229, 255;
+  --gold: #ffb347;
+  --gold-rgb: 255, 179, 71;
+  --spd: 1;
+  --mono: 'Share Tech Mono', ui-monospace, monospace;
+  --display: 'Orbitron', 'Rajdhani', sans-serif;
+  --cut: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  transition: --accent 0.6s ease;
+}
+.app[data-status='listening'] { --accent: #ff4d2e; --accent-rgb: 255, 77, 46; --spd: 0.5; }
+.app[data-status='thinking'] { --accent: #ffc400; --accent-rgb: 255, 196, 0; --spd: 0.2; }
+.app[data-status='speaking'] { --accent: #7df9ff; --accent-rgb: 125, 249, 255; --spd: 0.6; }
+
+/* ---------- Background layers ---------- */
+.app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+.app::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+  z-index: 60;
+}
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(var(--accent-rgb), 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
+  animation: grid-move 18s linear infinite;
+}
+.bg-sweep {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 200vmax;
+  height: 200vmax;
+  translate: -50% -50%;
+  z-index: 0;
+  background: conic-gradient(from 0deg, transparent 0 330deg, rgba(var(--accent-rgb), 0.07) 360deg);
+  animation: spin 14s linear infinite;
+  pointer-events: none;
+}
+.corners {
+  position: fixed;
+  inset: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  pointer-events: none;
+  z-index: 5;
+}
+.corners i {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--accent);
+  opacity: 0.7;
+  animation: corner-pulse 3s ease-in-out infinite;
+}
+.corners i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.corners i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+.corners i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+.corners i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+
+@media (max-width: 640px) {
+  .corners i { width: 22px; height: 22px; }
+}
+
+/* ---------- Shared keyframes ---------- */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes blink { 50% { opacity: 0.25; } }
+@keyframes breathe { 50% { opacity: 0.55; transform: scale(0.97); } }
+@keyframes float { 50% { transform: translateY(-4px); } }
+@keyframes scan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
+@keyframes grid-move { to { background-position: 44px 44px, 44px 44px; } }
+@keyframes corner-pulse { 50% { opacity: 0.25; } }
+@keyframes run-line { from { left: -40%; } to { left: 100%; } }
+@keyframes msg-in { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } }
+@keyframes drop-in { from { opacity: 0; transform: translateY(-30px); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(30px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

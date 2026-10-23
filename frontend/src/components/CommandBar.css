@@ -1,0 +1,71 @@
+.command-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 16px;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  background: rgba(2, 10, 20, 0.75);
+  clip-path: var(--cut);
+  box-shadow: inset 0 0 24px rgba(var(--accent-rgb), 0.08);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  animation: rise-in 0.8s 0.3s ease-out both;
+}
+.command-bar:focus-within {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 30px rgba(var(--accent-rgb), 0.2);
+}
+.command-bar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 1px;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: run-line 3s linear infinite;
+}
+.prompt { font: 18px var(--mono); color: var(--accent); animation: blink 1s step-end infinite; }
+.command-bar input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #effcff;
+  font: 15px var(--mono);
+  letter-spacing: 1px;
+}
+.command-bar input::placeholder { color: rgba(var(--accent-rgb), 0.45); }
+.command-bar button {
+  min-height: 44px;
+  font: 600 12px var(--display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0 20px;
+  border: 1px solid var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+  cursor: pointer;
+  touch-action: manipulation;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+.command-bar button:disabled { opacity: 0.4; cursor: default; }
+@media (hover: hover) {
+  .command-bar button:not(:disabled):hover {
+    background: var(--accent);
+    color: #02060d;
+    box-shadow: 0 0 20px var(--accent);
+  }
+}
+
+/* 16px stops iOS Safari from zooming into the field on focus. */
+@media (pointer: coarse) {
+  .command-bar input { font-size: 16px; }
+}
+@media (max-width: 400px) {
+  .command-bar { padding-left: 12px; gap: 6px; }
+  .command-bar button { padding: 0 14px; letter-spacing: 1px; }
+}
