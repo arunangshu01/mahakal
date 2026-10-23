@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import {
   API_BASE,
   ApiError,
+  clearMemories,
+  deleteAccount,
+  deleteMemory,
+  getConversation,
   getHealth,
+  getMemories,
   getSession,
   isSignInRequired,
   resetConversation,
@@ -10,13 +15,12 @@ import {
   sendRecording,
   signInWithGoogle,
   signOut,
+  streamMessage,
+  userTimezone,
 } from './api'
+import { STREAM_TOKEN, sseResponse, jsonResponse as json } from './test/responses'
 
-const jsonResponse = (status, body) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  json: () => Promise.resolve(body),
-})
+const jsonResponse = (status, body) => json(body, status)
 
 beforeEach(() => {
   globalThis.fetch = vi.fn()
@@ -36,7 +40,7 @@ describe('requests', () => {
     expect(url).toBe(`${API_BASE}/chat`)
     expect(options.method).toBe('POST')
     expect(options.headers['Content-Type']).toBe('application/json')
-    expect(JSON.parse(options.body)).toEqual({ text: 'Hello' })
+    expect(JSON.parse(options.body)).toEqual({ text: 'Hello', timezone: userTimezone() })
   })
 
   test.each([
@@ -50,12 +54,78 @@ describe('requests', () => {
     expect(url).toBe(`${API_BASE}/listen`)
     expect(options.body).toBeInstanceOf(FormData)
     expect(options.body.get('file').name).toBe(filename)
+    expect(options.body.get('timezone')).toBe(userTimezone())
   })
 
   test('resetConversation posts to /reset', async () => {
     fetch.mockResolvedValue(jsonResponse(200, { message: 'cleared' }))
     await resetConversation()
     expect(fetch).toHaveBeenCalledWith(`${API_BASE}/reset`, { method: 'POST' })
+  })
+})
+
+describe('streaming', () => {
+  test('gets a stream token, then streams events until done', async () => {
+    fetch.mockResolvedValueOnce(jsonResponse(200, STREAM_TOKEN)).mockResolvedValueOnce(
+      sseResponse([
+        { type: 'tool', name: 'get_weather', label: 'Checking the weather' },
+        { type: 'delta', text: 'Sunny ' },
+        { type: 'delta', text: 'and 30°C.' },
+        { type: 'done', reply: 'Sunny and 30°C.', audio_b64: 'AAA', guest_remaining: 3 },
+      ]),
+    )
+    const events = []
+
+    const done = await streamMessage('Weather?', (event) => events.push(event))
+
+    expect(done).toMatchObject({ reply: 'Sunny and 30°C.', guest_remaining: 3 })
+    expect(events.map((e) => e.type)).toEqual(['tool', 'delta', 'delta', 'done'])
+    expect(fetch.mock.calls[0][0]).toBe(`${API_BASE}/chat/stream-token`)
+    const [url, options] = fetch.mock.calls[1]
+    expect(url).toBe(STREAM_TOKEN.stream_url)
+    expect(options.headers.Authorization).toBe('Bearer stream-token')
+    expect(JSON.parse(options.body)).toEqual({ text: 'Weather?', timezone: userTimezone() })
+  })
+
+  test('streams from Cloud Run when the backend says so', async () => {
+    const remote = { ...STREAM_TOKEN, stream_url: 'https://mahakal-api.example.run.app/mahakal/api/v1/chat/stream' }
+    fetch.mockResolvedValueOnce(jsonResponse(200, remote)).mockResolvedValueOnce(sseResponse([{ type: 'done', reply: 'ok' }]))
+    await streamMessage('hi')
+    expect(fetch.mock.calls[1][0]).toBe(remote.stream_url)
+  })
+
+  test('turns an error event into an ApiError', async () => {
+    fetch.mockResolvedValueOnce(jsonResponse(200, STREAM_TOKEN)).mockResolvedValueOnce(
+      sseResponse([{ type: 'error', error_message: 'Error: Providers down.', error_type: 'AllProvidersFailedError' }]),
+    )
+    await expect(streamMessage('hi')).rejects.toMatchObject({ message: 'Providers down.', type: 'AllProvidersFailedError' })
+  })
+
+  test('reports an HTTP error before streaming (e.g. guest limit)', async () => {
+    fetch.mockResolvedValueOnce(jsonResponse(200, STREAM_TOKEN)).mockResolvedValueOnce(
+      jsonResponse(401, { detail: { error_message: 'Error: Sign in.', error_type: 'GuestLimitReachedError' } }),
+    )
+    const error = await streamMessage('hi').catch((e) => e)
+    expect(isSignInRequired(error)).toBe(true)
+  })
+
+  test('notices a stream that ends without a reply', async () => {
+    fetch.mockResolvedValueOnce(jsonResponse(200, STREAM_TOKEN)).mockResolvedValueOnce(sseResponse([{ type: 'delta', text: 'Hal' }]))
+    await expect(streamMessage('hi')).rejects.toThrow(/cut off/)
+  })
+})
+
+describe('history, memories and account', () => {
+  test.each([
+    ['getConversation', () => getConversation(), '/conversation', undefined],
+    ['getMemories', () => getMemories(), '/memories', undefined],
+    ['deleteMemory', () => deleteMemory(2), '/memories/2', { method: 'DELETE' }],
+    ['clearMemories', () => clearMemories(), '/memories', { method: 'DELETE' }],
+    ['deleteAccount', () => deleteAccount(), '/auth/account', { method: 'DELETE' }],
+  ])('%s calls %s', async (_, call, path, options) => {
+    fetch.mockResolvedValue(jsonResponse(200, {}))
+    await call()
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE}${path}`, options)
   })
 })
 

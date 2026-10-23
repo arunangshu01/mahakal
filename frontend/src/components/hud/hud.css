@@ -116,6 +116,16 @@
   color: var(--accent);
 }
 .account-name { color: #effcff; }
+.account-open {
+  min-height: 36px;
+  padding: 0 4px;
+  font: inherit;
+  letter-spacing: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.account-open:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .account-guest { color: var(--gold); }
 .account-guest.empty { color: #ff7a7a; }
 .account-button {

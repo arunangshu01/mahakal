@@ -65,7 +65,25 @@
 @media (pointer: coarse) {
   .command-bar input { font-size: 16px; }
 }
+.command-bar .wake-toggle {
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(var(--accent-rgb), 0.6);
+  border-color: rgba(var(--accent-rgb), 0.35);
+  background: transparent;
+  clip-path: none;
+  flex-shrink: 0;
+}
+.command-bar .wake-toggle.on {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(var(--gold-rgb), 0.12);
+}
+.command-bar .wake-toggle.listening span { animation: blink 1.2s ease-in-out infinite; }
 @media (max-width: 400px) {
   .command-bar { padding-left: 12px; gap: 6px; }
   .command-bar button { padding: 0 14px; letter-spacing: 1px; }
+  .command-bar .wake-toggle { padding: 0 6px; }
 }

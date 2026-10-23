@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getSession, signInWithGoogle, signOut as signOutRequest } from '../api'
+import { deleteAccount as deleteAccountRequest, getSession, signInWithGoogle, signOut as signOutRequest } from '../api'
 
 // The current visitor: a signed-in Google user, or a guest with a few free messages.
 export function useAuth() {
@@ -31,6 +31,11 @@ export function useAuth() {
     setSession(await signOutRequest())
   }, [])
 
+  // Permanently deletes the signed-in user's data; the visitor becomes a guest again.
+  const deleteAccount = useCallback(async () => {
+    setSession(await deleteAccountRequest())
+  }, [])
+
   const setGuestRemaining = useCallback((remaining) => {
     setSession((s) => (s?.guest ? { ...s, guest: { ...s.guest, remaining } } : s))
   }, [])
@@ -43,6 +48,7 @@ export function useAuth() {
     error,
     signIn,
     signOut,
+    deleteAccount,
     setGuestRemaining,
   }
 }

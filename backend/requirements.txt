@@ -6,6 +6,7 @@ google-cloud-secret-manager==2.31.0
 google-genai==2.31.0
 groq==1.7.0
 httpx2==2.13.1
+httpx==0.28.1
 pytest==9.1.1
 python-dotenv==1.2.4
 python-multipart==0.0.32

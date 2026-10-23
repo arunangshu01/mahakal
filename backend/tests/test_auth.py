@@ -71,3 +71,21 @@ def test_session_round_trip():
     assert decode_session(token)["gid"] == "g1"
     assert decode_session("not-a-token") is None
     assert decode_session(token + "x") is None
+
+
+def test_delete_account_removes_everything_and_signs_out(signed_in_client, api_base, fake_llm, fake_voice):
+    signed_in_client.post(f"{api_base}/chat", json={"text": "remember this"})
+    store.save_memories(TEST_USER["id"], ["Lives in Kolkata"])
+
+    res = signed_in_client.delete(f"{api_base}/auth/account")
+
+    assert res.status_code == 200
+    assert res.json()["user"] is None
+    assert TEST_USER["id"] not in store.users
+    assert store.load_memories(TEST_USER["id"]) == []
+    assert f"user_{TEST_USER['id']}" not in store.conversations
+    assert signed_in_client.get(f"{api_base}/auth/me").json()["user"] is None
+
+
+def test_guests_cannot_delete_an_account(client, api_base):
+    assert client.delete(f"{api_base}/auth/account").status_code == 401

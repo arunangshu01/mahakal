@@ -1,0 +1,80 @@
+.account-dialog { text-align: left; }
+.account-dialog h2 { margin-bottom: 2px; }
+.account-email {
+  font: 13px var(--mono);
+  color: rgba(216, 246, 255, 0.6);
+}
+.account-section {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(var(--accent-rgb), 0.2);
+}
+.account-section h3 {
+  margin-bottom: 6px;
+  font: 600 11px var(--display);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.account-hint {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: rgba(216, 246, 255, 0.65);
+}
+.memory-list {
+  list-style: none;
+  margin-bottom: 12px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.memory-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(var(--accent-rgb), 0.2);
+  font-size: 15px;
+}
+.memory-list button {
+  flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
+  color: rgba(216, 246, 255, 0.6);
+  background: transparent;
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  cursor: pointer;
+}
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.account-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+.account-confirm p {
+  width: 100%;
+  font-size: 14px;
+  color: #ff9a9a;
+}
+.signin-secondary.danger {
+  color: #ff7a7a;
+  border-color: rgba(255, 122, 122, 0.6);
+}
+.account-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}

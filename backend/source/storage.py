@@ -26,6 +26,12 @@ class ConversationStore(Protocol):
 
     def save_user(self, profile: dict) -> None: ...
 
+    def load_memories(self, user_id: str) -> list[str]: ...
+
+    def save_memories(self, user_id: str, memories: list[str]) -> None: ...
+
+    def delete_user(self, user_id: str) -> None: ...
+
 
 class MemoryStore:
     """Keeps everything in process memory. Used for local development and tests."""
@@ -33,6 +39,7 @@ class MemoryStore:
     def __init__(self):
         self.conversations: dict[str, Conversation] = {}
         self.users: dict[str, dict] = {}
+        self.memories: dict[str, list[str]] = {}
 
     def load(self, key: str) -> Conversation:
         stored = self.conversations.get(key)
@@ -44,16 +51,28 @@ class MemoryStore:
     def save_user(self, profile: dict) -> None:
         self.users[profile['id']] = dict(profile)
 
+    def load_memories(self, user_id: str) -> list[str]:
+        return list(self.memories.get(user_id, []))
+
+    def save_memories(self, user_id: str, memories: list[str]) -> None:
+        self.memories[user_id] = list(memories)
+
+    def delete_user(self, user_id: str) -> None:
+        self.users.pop(user_id, None)
+        self.memories.pop(user_id, None)
+        self.conversations.pop(f"user_{user_id}", None)
+
     def clear(self) -> None:
         self.conversations.clear()
         self.users.clear()
+        self.memories.clear()
 
 
 class FirestoreStore:
     """Firestore layout:
 
     conversations/{key}  messages (last HISTORY_LIMIT), guest_messages_used, updated_at, expire_at
-    users/{id}           email, name, picture, last_login_at
+    users/{id}           email, name, picture, last_login_at, memories (long-term facts)
 
     `expire_at` drives a Firestore TTL policy, so idle conversations are deleted automatically.
     """
@@ -81,6 +100,17 @@ class FirestoreStore:
             {**{k: v for k, v in profile.items() if k != 'id'}, 'last_login_at': datetime.now(timezone.utc)},
             merge=True,
         )
+
+    def load_memories(self, user_id: str) -> list[str]:
+        data = self._db.collection('users').document(user_id).get().to_dict() or {}
+        return list(data.get('memories', []))
+
+    def save_memories(self, user_id: str, memories: list[str]) -> None:
+        self._db.collection('users').document(user_id).set({'memories': memories}, merge=True)
+
+    def delete_user(self, user_id: str) -> None:
+        self._db.collection('conversations').document(f"user_{user_id}").delete()
+        self._db.collection('users').document(user_id).delete()
 
 
 def create_store() -> ConversationStore:

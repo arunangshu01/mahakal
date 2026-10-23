@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { isSignInRequired, sendMessage, sendRecording } from '../api'
+import { isSignInRequired, sendRecording, streamMessage } from '../api'
 
 const MIC_UNAVAILABLE =
   'Voice input needs microphone access over HTTPS (or localhost). You can still type below.'
@@ -23,8 +23,37 @@ export function useAssistant({ onGuestRemaining, onSignInRequired } = {}) {
     callbacksRef.current = { onGuestRemaining, onSignInRequired }
   }, [onGuestRemaining, onSignInRequired])
 
-  const addMessage = useCallback((text, from) => {
-    setMessages((m) => [...m, { id: ++nextId, text, from }])
+  // Message: { id, text, from: 'user' | 'ai', typewriter?, streaming?, tool? }
+  const addMessage = useCallback((text, from, extra = {}) => {
+    const id = ++nextId
+    setMessages((m) => [...m, { id, text, from, ...extra }])
+    return id
+  }, [])
+
+  const updateMessage = useCallback((id, update) => {
+    setMessages((m) => m.map((msg) => (msg.id === id ? { ...msg, ...update(msg) } : msg)))
+  }, [])
+
+  // Replaces the chat with past history, keeping any notices (e.g. "account deleted").
+  const showHistory = useCallback((history) => {
+    const past = history.map(({ role, content }) => ({ id: ++nextId, text: content, from: role === 'user' ? 'user' : 'ai' }))
+    setMessages((m) => [...past, ...m.filter((msg) => msg.notice)])
+  }, [])
+
+  const clearMessages = useCallback(() => setMessages([]), [])
+
+  const notify = useCallback((text) => addMessage(text, 'ai', { notice: true }), [addMessage])
+
+  const reportGuestRemaining = (remaining) => {
+    if (remaining != null) callbacksRef.current.onGuestRemaining?.(remaining)
+  }
+
+  const handleFailure = useCallback((error) => {
+    setStatus('idle')
+    if (isSignInRequired(error)) {
+      callbacksRef.current.onGuestRemaining?.(0)
+      callbacksRef.current.onSignInRequired?.()
+    }
   }, [])
 
   const audioContext = () => {
@@ -66,36 +95,48 @@ export function useAssistant({ onGuestRemaining, onSignInRequired } = {}) {
     audio.play().catch(finish)
   }, [])
 
-  const handleReply = useCallback(
-    async (request, userText) => {
-      if (userText) addMessage(userText, 'user')
+  // Voice: the whole reply arrives at once and is revealed with a typewriter effect.
+  const handleVoiceReply = useCallback(
+    async (blob) => {
       setStatus('thinking')
       try {
-        const res = await request()
+        const res = await sendRecording(blob)
         if (res.transcript) addMessage(res.transcript, 'user')
-        addMessage(res.reply, 'ai')
-        if (res.guest_remaining != null) callbacksRef.current.onGuestRemaining?.(res.guest_remaining)
+        addMessage(res.reply, 'ai', { typewriter: true })
+        reportGuestRemaining(res.guest_remaining)
         playReply(res.audio_b64)
       } catch (error) {
         addMessage(error.message, 'ai')
-        setStatus('idle')
-        if (isSignInRequired(error)) {
-          callbacksRef.current.onGuestRemaining?.(0)
-          callbacksRef.current.onSignInRequired?.()
-        }
+        handleFailure(error)
       }
     },
-    [addMessage, playReply],
+    [addMessage, handleFailure, playReply],
   )
 
+  // Text: the reply streams in as it is generated; tool use (weather, search…) is shown live.
   const sendText = useCallback(
     (text) => {
       const message = text.trim()
       if (!message || status === 'thinking') return false
-      handleReply(() => sendMessage(message), message)
+      addMessage(message, 'user')
+      setStatus('thinking')
+      const id = addMessage('', 'ai', { streaming: true })
+      streamMessage(message, (event) => {
+        if (event.type === 'tool') updateMessage(id, () => ({ tool: event.label }))
+        if (event.type === 'delta') updateMessage(id, (msg) => ({ text: msg.text + event.text, tool: null }))
+      })
+        .then((done) => {
+          updateMessage(id, () => ({ text: done.reply, streaming: false, tool: null }))
+          reportGuestRemaining(done.guest_remaining)
+          playReply(done.audio_b64)
+        })
+        .catch((error) => {
+          updateMessage(id, () => ({ text: error.message, streaming: false, tool: null }))
+          handleFailure(error)
+        })
       return true
     },
-    [handleReply, status],
+    [addMessage, handleFailure, playReply, status, updateMessage],
   )
 
   const startListening = async () => {
@@ -124,7 +165,7 @@ export function useAssistant({ onGuestRemaining, onSignInRequired } = {}) {
       analyserRef.current = null
       // iOS Safari records audio/mp4, everything else webm/ogg.
       const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
-      handleReply(() => sendRecording(blob))
+      handleVoiceReply(blob)
     }
     recorderRef.current = recorder
     recorder.start()
@@ -136,5 +177,5 @@ export function useAssistant({ onGuestRemaining, onSignInRequired } = {}) {
     else if (status === 'idle') startListening()
   }
 
-  return { messages, status, analyserRef, sendText, toggleListening }
+  return { messages, status, analyserRef, sendText, toggleListening, showHistory, clearMessages, notify }
 }

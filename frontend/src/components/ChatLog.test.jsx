@@ -13,14 +13,29 @@ test('labels messages from the user and from M.A.H.A.K.A.L.', () => {
       messages={[
         { id: 1, text: 'Hello', from: 'user' },
         { id: 2, text: 'Namaste', from: 'ai' },
+        { id: 3, text: 'Spoken reply', from: 'ai', typewriter: true },
       ]}
     />,
   )
   expect(screen.getByRole('log')).toBeInTheDocument()
   expect(screen.getByText('YOU')).toBeInTheDocument()
-  expect(screen.getByText('M.A.H.A.K.A.L.')).toBeInTheDocument()
+  expect(screen.getAllByText('M.A.H.A.K.A.L.')).toHaveLength(2)
   expect(screen.getByText('Hello')).toBeInTheDocument()
-  expect(screen.getByLabelText('Namaste')).toBeInTheDocument()
+  expect(screen.getByText('Namaste')).toBeInTheDocument()
+  expect(screen.getByLabelText('Spoken reply')).toBeInTheDocument()
+})
+
+test('shows a streaming reply with its tool activity and a caret', () => {
+  const { container, rerender } = render(
+    <ChatLog messages={[{ id: 1, text: 'It is', from: 'ai', streaming: true, tool: 'Checking the weather' }]} />,
+  )
+  expect(screen.getByText(/Checking the weather/)).toBeInTheDocument()
+  expect(container.querySelector('.msg')).toHaveAttribute('aria-busy', 'true')
+  expect(container.querySelector('.caret')).not.toBeNull()
+
+  rerender(<ChatLog messages={[{ id: 1, text: 'It is sunny.', from: 'ai', streaming: false }]} />)
+  expect(screen.getByText('It is sunny.')).toBeInTheDocument()
+  expect(container.querySelector('.caret')).toBeNull()
 })
 
 test('Typewriter reveals the text over time', () => {

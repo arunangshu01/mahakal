@@ -68,9 +68,30 @@ USER_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('USER_RATE_LIMIT_WINDOW_SECONDS',
 GUEST_IP_RATE_LIMIT_MAX_REQUESTS = int(os.getenv('GUEST_IP_RATE_LIMIT_MAX_REQUESTS', '15'))
 GUEST_IP_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('GUEST_IP_RATE_LIMIT_WINDOW_SECONDS', '3600'))
 
+# Streaming: Firebase Hosting buffers responses, so the browser streams replies straight from
+# Cloud Run at this origin using a short-lived token. Empty = same origin (local development).
+STREAM_API_ORIGIN = os.getenv('STREAM_API_ORIGIN', '').rstrip('/')
+STREAM_TOKEN_TTL_SECONDS = 120
+
+# Tools and long-term memory.
+DEFAULT_TIMEZONE = os.getenv('DEFAULT_TIMEZONE', 'Asia/Kolkata')
+MAX_TOOL_ROUNDS = 4
+MAX_MEMORIES = 30
+MAX_MEMORY_LENGTH = 200
+TOOL_HTTP_TIMEOUT_SECONDS = 6
+TOOL_USER_AGENT = 'MAHAKAL/1.0 (https://mahakal-ai.web.app)'
+
 SYSTEM_PROMPT = (
     f"You are {ASSISTANT_NAME}, a personal AI assistant — a Modular Agentic Hub for "
     "Automation, Knowledge & Adaptive Logic. You speak concisely and helpfully, "
     "like a calm, competent aide. Keep spoken replies short (1-3 sentences) "
-    "unless the user asks for detail."
+    "unless the user asks for detail. Your replies are read aloud, so write plain text: "
+    "no markdown, bullet points, tables or emoji. Use your tools for the current date or time, "
+    "weather and factual lookups instead of guessing."
+)
+MEMORY_PROMPT = (
+    "You can remember things about the signed-in user across conversations. When they share a "
+    "lasting fact or preference (name, city, language, interests, how they like answers) or ask you "
+    "to remember something, call the remember tool. When they ask you to forget something, call the "
+    "forget tool. Do not remember passwords, financial or health details."
 )

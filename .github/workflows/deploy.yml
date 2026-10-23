@@ -31,6 +31,11 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
+    # Add yourself as a required reviewer on this environment (Settings → Environments → production)
+    # and every deploy waits for your approval.
+    environment:
+      name: production
+      url: https://mahakal-ai.web.app
     steps:
       - name: Check deployment variables
         env:

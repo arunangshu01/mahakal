@@ -33,19 +33,19 @@ test('Modules reflects which providers the backend has configured', () => {
 
 test('AccountBadge shows guest messages left and a sign-in button', async () => {
   const onSignIn = vi.fn()
-  render(<AccountBadge user={null} guest={{ remaining: 2, limit: 5 }} onSignIn={onSignIn} onSignOut={() => {}} />)
+  render(<AccountBadge user={null} guest={{ remaining: 2, limit: 5 }} onSignIn={onSignIn} onOpenAccount={() => {}} />)
   expect(screen.getByText('GUEST · 2/5')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'SIGN IN' }))
   expect(onSignIn).toHaveBeenCalled()
 })
 
-test('AccountBadge shows the signed-in user and a sign-out button', async () => {
-  const onSignOut = vi.fn()
+test('AccountBadge shows the signed-in user and opens the account panel', async () => {
+  const onOpenAccount = vi.fn()
   const user = { id: '1', name: 'Shiva Shankar', email: 's@example.com', picture: '' }
-  render(<AccountBadge user={user} guest={null} onSignIn={() => {}} onSignOut={onSignOut} />)
+  render(<AccountBadge user={user} guest={null} onSignIn={() => {}} onOpenAccount={onOpenAccount} />)
   expect(screen.getByText('SHIVA')).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Sign out Shiva Shankar' }))
-  expect(onSignOut).toHaveBeenCalled()
+  await userEvent.click(screen.getByRole('button', { name: 'Account: Shiva Shankar' }))
+  expect(onOpenAccount).toHaveBeenCalled()
 })
 
 test('Diagnostics renders every metric', () => {

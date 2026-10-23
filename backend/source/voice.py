@@ -1,4 +1,5 @@
 import base64
+import re
 
 import edge_tts
 
@@ -14,9 +15,12 @@ class Voice:
     @staticmethod
     def prepare_for_speech(text: str) -> str:
         # Otherwise the TTS engine spells the name out letter by letter.
-        return text.replace(ASSISTANT_NAME, ASSISTANT_SPOKEN_NAME).replace(
+        text = text.replace(ASSISTANT_NAME, ASSISTANT_SPOKEN_NAME).replace(
             ASSISTANT_NAME.rstrip('.'), ASSISTANT_SPOKEN_NAME
         )
+        # Markdown symbols would be read out loud ("asterisk asterisk").
+        text = re.sub(r'[*_`#]+', '', text)
+        return re.sub(r'[\u00a0\u202f]', ' ', text)
 
     async def speak(self, text: str) -> bytes:
         communicate = edge_tts.Communicate(self.prepare_for_speech(text), self.voice)
