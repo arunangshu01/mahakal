@@ -38,6 +38,33 @@ test('shows a streaming reply with its tool activity and a caret', () => {
   expect(container.querySelector('.caret')).toBeNull()
 })
 
+test('renders markdown in assistant replies: lists, tables and links', () => {
+  render(
+    <ChatLog
+      messages={[
+        {
+          id: 1,
+          from: 'ai',
+          text: 'Steps:\n1. First\n2. Second\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\nSee [Groq](https://groq.com).',
+        },
+      ]}
+    />,
+  )
+  expect(screen.getByRole('list').children).toHaveLength(2)
+  expect(screen.getByRole('table')).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'A' })).toBeInTheDocument()
+  expect(screen.getByRole('cell', { name: '2' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Groq' })).toHaveAttribute('href', 'https://groq.com')
+})
+
+test('does not render markdown in user messages', () => {
+  const { container } = render(
+    <ChatLog messages={[{ id: 1, from: 'user', text: 'show me **this**' }]} />,
+  )
+  expect(container.querySelector('strong')).toBeNull()
+  expect(screen.getByText('show me **this**')).toBeInTheDocument()
+})
+
 test('Typewriter reveals the text over time', () => {
   vi.useFakeTimers()
   const { container } = render(<Typewriter text="Om Namah Shivaya" speed={10} step={4} />)

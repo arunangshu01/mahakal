@@ -1,15 +1,23 @@
 import { useEffect, useRef } from 'react'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { ASSISTANT_NAME } from '../constants'
 import Typewriter from './Typewriter'
 import './ChatLog.css'
 
 function MessageText({ message }) {
   if (message.typewriter) return <Typewriter text={message.text} />
-  if (!message.streaming) return message.text
+  const body =
+    message.from === 'ai' ? (
+      <Markdown remarkPlugins={[remarkGfm]}>{message.text}</Markdown>
+    ) : (
+      message.text
+    )
+  if (!message.streaming) return body
   return (
     <>
       {message.tool && <span className="msg-tool">⟳ {message.tool}…</span>}
-      {message.text}
+      {body}
       <span className="caret" aria-hidden="true">
         ▌
       </span>

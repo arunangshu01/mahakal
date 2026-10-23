@@ -18,9 +18,14 @@ class Voice:
         text = text.replace(ASSISTANT_NAME, ASSISTANT_SPOKEN_NAME).replace(
             ASSISTANT_NAME.rstrip('.'), ASSISTANT_SPOKEN_NAME
         )
-        # Markdown symbols would be read out loud ("asterisk asterisk").
-        text = re.sub(r'[*_`#]+', '', text)
-        return re.sub(r'[\u00a0\u202f]', ' ', text)
+        # Markdown syntax would be read out loud ("asterisk asterisk", "pipe").
+        text = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1', text)          # [link](url) -> link
+        text = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', text)               # drop images
+        text = re.sub(r'^\s*\|?[\s:|-]+\|?\s*$', '', text, flags=re.M)  # table separators
+        text = re.sub(r'[*_`#|>]+', ' ', text)
+        text = re.sub(r'^\s*[-+]\s+', '', text, flags=re.M)            # bullet markers
+        text = re.sub(r'\s+', ' ', text)
+        return text.strip()
 
     async def speak(self, text: str) -> bytes:
         communicate = edge_tts.Communicate(self.prepare_for_speech(text), self.voice)
