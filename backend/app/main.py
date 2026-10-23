@@ -3,13 +3,29 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from routers import chat, conversation, health_check, listen
-from utility.settings import API_COMMON_PREFIX, ASSISTANT_NAME, CORS_ORIGINS, DEBUG_MODE, FRONTEND_DIST, HOST, PORT
+from routers import auth, chat, conversation, health_check, listen
+from utility.logger import Logger
+from utility.settings import (
+    API_COMMON_PREFIX,
+    ASSISTANT_NAME,
+    CORS_ORIGINS,
+    DEBUG_MODE,
+    FRONTEND_DIST,
+    HOST,
+    PORT,
+    SESSION_SECRET_IS_EPHEMERAL,
+)
+
+logger = Logger(__name__)
 
 tags_metadata = [
     {
         "name": "Health Check",
         "description": "For API Health Check and configured AI providers"
+    },
+    {
+        "name": "Authentication",
+        "description": "Google sign-in, guest status and sign-out"
     },
     {
         "name": "Chat",
@@ -36,6 +52,7 @@ app = FastAPI(
 )
 
 app.include_router(health_check.router, prefix=API_COMMON_PREFIX)
+app.include_router(auth.router, prefix=API_COMMON_PREFIX)
 app.include_router(chat.router, prefix=API_COMMON_PREFIX)
 app.include_router(listen.router, prefix=API_COMMON_PREFIX)
 app.include_router(conversation.router, prefix=API_COMMON_PREFIX)
@@ -43,9 +60,13 @@ app.include_router(conversation.router, prefix=API_COMMON_PREFIX)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if SESSION_SECRET_IS_EPHEMERAL:
+    logger.warning("SESSION_SECRET is not set; using a temporary one. Sessions will reset on restart.")
 
 # In production the built React app (frontend/dist) is served from the same origin.
 # Mounted last so it never shadows the API routes.

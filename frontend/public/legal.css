@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  background: #02060d;
+  color: #d8f6ff;
+  font: 17px/1.6 'Rajdhani', system-ui, sans-serif;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 20px 60px;
+}
+h1 {
+  font: 800 clamp(22px, 5vw, 30px) 'Orbitron', sans-serif;
+  letter-spacing: 3px;
+  color: #effcff;
+  text-shadow: 0 0 12px #00e5ff;
+}
+h2 {
+  margin-top: 32px;
+  font: 600 15px 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+  color: #ffb347;
+  text-transform: uppercase;
+}
+a { color: #00e5ff; }
+.updated { color: rgba(216, 246, 255, 0.6); font-size: 14px; }
+.back { display: inline-block; margin-bottom: 24px; text-decoration: none; letter-spacing: 2px; }

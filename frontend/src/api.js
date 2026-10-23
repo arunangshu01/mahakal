@@ -1,12 +1,15 @@
 export const API_BASE = '/api/v1'
 
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, type = null) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.type = type
   }
 }
+
+export const isSignInRequired = (error) => error?.type === 'GuestLimitReachedError'
 
 function errorMessage(body, status) {
   const detail = body?.detail
@@ -23,18 +26,26 @@ async function request(path, options) {
     throw new ApiError('Cannot reach M.A.H.A.K.A.L. — is the backend running?', 0)
   }
   const body = await res.json().catch(() => null)
-  if (!res.ok) throw new ApiError(errorMessage(body, res.status), res.status)
+  if (!res.ok) throw new ApiError(errorMessage(body, res.status), res.status, body?.detail?.error_type ?? null)
   return body
 }
 
-export const getHealth = () => request('/health')
-
-export const sendMessage = (text) =>
-  request('/chat', {
+const postJson = (path, data) =>
+  request(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify(data),
   })
+
+export const getHealth = () => request('/health')
+
+export const getSession = () => request('/auth/me')
+
+export const signInWithGoogle = (credential) => postJson('/auth/google', { credential })
+
+export const signOut = () => request('/auth/logout', { method: 'POST' })
+
+export const sendMessage = (text) => postJson('/chat', { text })
 
 export function sendRecording(blob) {
   const extension = blob.type.includes('mp4') ? 'mp4' : blob.type.includes('ogg') ? 'ogg' : 'webm'

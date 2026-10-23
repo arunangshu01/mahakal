@@ -8,6 +8,8 @@ def test_health_check(client, api_base):
     assert body["status"] == "OK"
     assert body["code"] == 200
     assert set(body["providers"]) == {"groq", "gemini"}
+    assert body["google_sign_in"] is True
+    assert body["storage"] == "memory"
 
 
 def test_health_check_reports_configured_providers(client, api_base, monkeypatch):
@@ -20,4 +22,5 @@ def test_health_check_reports_configured_providers(client, api_base, monkeypatch
 def test_docs_are_served_under_the_api_prefix(client, api_base):
     assert client.get(f"{api_base}/docs").status_code == 200
     paths = client.get(f"{api_base}/openapi.json").json()["paths"]
-    assert {f"{api_base}/health", f"{api_base}/chat", f"{api_base}/listen", f"{api_base}/reset"} <= set(paths)
+    expected = {"health", "chat", "listen", "reset", "auth/me", "auth/google", "auth/logout"}
+    assert {f"{api_base}/{path}" for path in expected} <= set(paths)

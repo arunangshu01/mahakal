@@ -34,7 +34,8 @@ def test_listen_handles_silence(client, api_base, monkeypatch, fake_llm):
     monkeypatch.setattr(ears, "transcribe", lambda audio_bytes, filename="speech.webm": "")
     res = client.post(f"{api_base}/listen", files=_upload())
     assert res.status_code == 200
-    assert res.json() == {"transcript": "", "reply": "I didn't catch that.", "audio_b64": ""}
+    # Silence doesn't use up one of the guest's free messages.
+    assert res.json() == {"transcript": "", "reply": "I didn't catch that.", "audio_b64": "", "guest_remaining": 5}
 
 
 def test_listen_requires_a_file(client, api_base):

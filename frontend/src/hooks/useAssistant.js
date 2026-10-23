@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
-import { sendMessage, sendRecording } from '../api'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { isSignInRequired, sendMessage, sendRecording } from '../api'
 
 const MIC_UNAVAILABLE =
   'Voice input needs microphone access over HTTPS (or localhost). You can still type below.'
@@ -9,12 +9,19 @@ let nextId = 0
 
 // Drives the conversation: status machine (idle → listening → thinking → speaking),
 // mic recording, reply playback and the analyser the reactor visualises.
-export function useAssistant() {
+// `onGuestRemaining(n)` reports the guest allowance after each reply;
+// `onSignInRequired()` fires when a guest has used all of their free messages.
+export function useAssistant({ onGuestRemaining, onSignInRequired } = {}) {
   const [messages, setMessages] = useState([])
   const [status, setStatus] = useState('idle')
   const analyserRef = useRef(null)
   const audioCtxRef = useRef(null)
   const recorderRef = useRef(null)
+  const callbacksRef = useRef({ onGuestRemaining, onSignInRequired })
+
+  useEffect(() => {
+    callbacksRef.current = { onGuestRemaining, onSignInRequired }
+  }, [onGuestRemaining, onSignInRequired])
 
   const addMessage = useCallback((text, from) => {
     setMessages((m) => [...m, { id: ++nextId, text, from }])
@@ -67,10 +74,15 @@ export function useAssistant() {
         const res = await request()
         if (res.transcript) addMessage(res.transcript, 'user')
         addMessage(res.reply, 'ai')
+        if (res.guest_remaining != null) callbacksRef.current.onGuestRemaining?.(res.guest_remaining)
         playReply(res.audio_b64)
       } catch (error) {
         addMessage(error.message, 'ai')
         setStatus('idle')
+        if (isSignInRequired(error)) {
+          callbacksRef.current.onGuestRemaining?.(0)
+          callbacksRef.current.onSignInRequired?.()
+        }
       }
     },
     [addMessage, playReply],
