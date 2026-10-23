@@ -49,7 +49,7 @@ frontend/
   src/hooks/           useAssistant, useAuth, useGoogleButton, useHealth, useClock
   src/components/      Reactor, HUD panels, chat log, command bar, sign-in dialog, boot sequence
   public/              privacy.html, terms.html, favicon
-firebase.json          Hosting config: serves the UI, rewrites /api/** to Cloud Run
+firebase.json          Hosting config: serves the UI, rewrites /mahakal/api/** to Cloud Run
 .github/workflows/     ci.yml (tests on every PR), deploy.yml (deploys after CI passes on main)
 docs/deploy-gcp.md     One-time Google Cloud setup and deployment guide
 ```
@@ -66,11 +66,13 @@ pip install -r requirements.txt
 cp .env.example .env     # add GROQ_API_KEY, GEMINI_API_KEY and GOOGLE_CLIENT_ID
 uvicorn app.main:app --reload
 
-# Frontend (http://localhost:5173, proxies /api to :8000), in a second terminal
+# Frontend (http://localhost:5173, proxies /mahakal/api to :8000), in a second terminal
 cd frontend
 npm install
 npm run dev
 ```
+
+Or run the backend in Docker (same image as production): `docker compose up --build`.
 
 Locally, conversations are kept in memory (`STORAGE_BACKEND=memory`). To use the real Firestore
 database instead, run `gcloud auth application-default login` and set `STORAGE_BACKEND=firestore`.
@@ -82,7 +84,7 @@ emblem, add an image you have the rights to at `frontend/public/mahakal.png`.
 
 ## API
 
-All endpoints live under `/api/v1`. Interactive docs: http://localhost:8000/api/v1/docs
+All endpoints live under `/mahakal/api/v1`. Interactive docs: http://localhost:8000/mahakal/api/v1/docs
 
 | Method | Path | Description |
 |---|---|---|
@@ -107,7 +109,8 @@ cd frontend && npm test             # frontend (Vitest + Testing Library)
 ## Deployment
 
 Merging a PR into `main` runs CI; when it passes, `.github/workflows/deploy.yml` deploys the API to
-Cloud Run and the UI to Firebase Hosting. API keys live in Secret Manager, never in the repo.
+Cloud Run and the UI to Firebase Hosting. API keys live in Secret Manager, never in the repo; the
+app reads them at startup (`SECRETS_SOURCE=secret-manager`, see `backend/utility/secrets.py`).
 One-time setup: [docs/deploy-gcp.md](docs/deploy-gcp.md).
 
 ## Roadmap

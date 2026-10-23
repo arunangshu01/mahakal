@@ -13,7 +13,7 @@ beforeEach(() => {
     '/auth/me': () => jsonResponse(SESSION),
     '/chat': () => jsonResponse({ reply: 'I am M.A.H.A.K.A.L.', audio_b64: '', guest_remaining: 1 }),
   }
-  globalThis.fetch = vi.fn((url) => Promise.resolve(routes[url.replace('/api/v1', '')]()))
+  globalThis.fetch = vi.fn((url) => Promise.resolve(routes[url.replace('/mahakal/api/v1', '')]()))
 })
 
 test('starts with the boot sequence', () => {
@@ -32,7 +32,7 @@ test('chatting by text shows both sides and updates the guest counter', async ()
   expect(screen.getByText('Who are you?')).toBeInTheDocument()
   expect(await screen.findByLabelText('I am M.A.H.A.K.A.L.')).toBeInTheDocument()
   expect(await screen.findByText('GUEST · 1/5')).toBeInTheDocument()
-  expect(fetch).toHaveBeenCalledWith('/api/v1/chat', expect.objectContaining({ method: 'POST' }))
+  expect(fetch).toHaveBeenCalledWith('/mahakal/api/v1/chat', expect.objectContaining({ method: 'POST' }))
 })
 
 test('opens the sign-in dialog when the guest limit is reached', async () => {

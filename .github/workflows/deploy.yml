@@ -67,8 +67,7 @@ jobs:
             --min-instances 0 \
             --max-instances 3 \
             --timeout 60 \
-            --set-env-vars "STORAGE_BACKEND=firestore,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},COOKIE_SECURE=true" \
-            --set-secrets "GROQ_API_KEY=groq-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,GOOGLE_CLIENT_ID=google-client-id:latest,SESSION_SECRET=session-secret:latest" \
+            --set-env-vars "SECRETS_SOURCE=secret-manager,STORAGE_BACKEND=firestore,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},COOKIE_SECURE=true" \
             --quiet
 
       - uses: actions/setup-node@v4
@@ -88,4 +87,4 @@ jobs:
 
       - name: Smoke test
         run: |
-          curl --fail --silent --show-error https://mahakal-ai.web.app/api/v1/health
+          curl --fail --silent --show-error https://mahakal-ai.web.app/mahakal/api/v1/health

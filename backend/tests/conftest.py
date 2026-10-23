@@ -2,6 +2,7 @@ import os
 
 # Tests never touch real services, whatever is in backend/.env (load_dotenv won't override these).
 os.environ.update({
+    "SECRETS_SOURCE": "env",
     "STORAGE_BACKEND": "memory",
     "SESSION_SECRET": "test-session-secret",
     "GOOGLE_CLIENT_ID": "test-client-id.apps.googleusercontent.com",

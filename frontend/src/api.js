@@ -1,4 +1,4 @@
-export const API_BASE = '/api/v1'
+export const API_BASE = '/mahakal/api/v1'
 
 export class ApiError extends Error {
   constructor(message, status, type = null) {

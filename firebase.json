@@ -5,7 +5,7 @@
     "ignore": ["**/.*"],
     "rewrites": [
       {
-        "source": "/api/**",
+        "source": "/mahakal/api/**",
         "run": { "serviceId": "mahakal-api", "region": "asia-south1" }
       },
       { "source": "**", "destination": "/index.html" }

@@ -1,0 +1,21 @@
+# Run the backend in Docker, built from the same Dockerfile Cloud Run uses:
+#   docker compose up --build
+# Then start the UI as usual (cd frontend && npm run dev) — it proxies /mahakal/api to :8000.
+services:
+  api:
+    build: ./backend
+    image: mahakal-api:local
+    ports:
+      - "8000:8080"
+    env_file: backend/.env
+    environment:
+      PORT: "8080"
+    # To use Firestore or SECRETS_SOURCE=secret-manager locally, run
+    # `gcloud auth application-default login` once and uncomment:
+    # volumes:
+    #   - ~/.config/gcloud:/home/appuser/.config/gcloud:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/mahakal/api/v1/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

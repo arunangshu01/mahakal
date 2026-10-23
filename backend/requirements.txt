@@ -2,6 +2,7 @@ edge-tts==7.3.1
 fastapi==0.143.2
 google-auth==2.62.0
 google-cloud-firestore==2.34.1
+google-cloud-secret-manager==2.31.0
 google-genai==2.31.0
 groq==1.7.0
 httpx2==2.13.1

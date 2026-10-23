@@ -2,7 +2,7 @@
 
 ```
 https://mahakal-ai.web.app   Firebase Hosting: React UI (CDN + free SSL)
-        └─ /api/**  →  Cloud Run "mahakal-api" (FastAPI, asia-south1)
+        └─ /mahakal/api/**  →  Cloud Run "mahakal-api" (FastAPI, asia-south1)
                           ├─ Firestore (default) — users, conversations
                           └─ Secret Manager — API keys, session secret
 Deploys: merge to main → CI passes → .github/workflows/deploy.yml
@@ -42,7 +42,10 @@ gcloud artifacts repositories create mahakal --repository-format=docker --locati
 
 ### 3. Runtime service account (what the app runs as)
 
-Can read/write Firestore and read exactly four secrets, nothing else.
+Can read/write Firestore and read exactly four secrets, nothing else. The app runs with
+`SECRETS_SOURCE=secret-manager`, so at startup it reads `groq-api-key`, `gemini-api-key`,
+`google-client-id` and `session-secret` itself (`backend/utility/secrets.py`). If any can't be read,
+the new revision fails to start and Cloud Run keeps serving the previous one.
 
 ```bash
 gcloud iam service-accounts create mahakal-run --display-name="M.A.H.A.K.A.L. Cloud Run runtime"
@@ -102,11 +105,37 @@ These are identifiers, not secrets.
 | `GCP_WIF_PROVIDER` | printed by step 6 |
 | `GCP_DEPLOY_SA` | printed by step 6 |
 
+### 8. GitHub `production` environment
+
+GitHub → repo → **Settings → Environments → New environment** → name it `production`.
+
+- **Deployment branches and tags** → *Selected branches and tags* → add `main`. Only `main` can deploy,
+  even if someone runs the workflow manually from another branch.
+- Optional: **Required reviewers** → add yourself to approve each deploy before it goes live.
+
+### 9. Ruleset protecting `main`
+
+GitHub → repo → **Settings → Rules → Rulesets → New ruleset → New branch ruleset**.
+
+| Setting | Value |
+|---|---|
+| Ruleset name | `protect-main` |
+| Enforcement status | **Active** |
+| Bypass list | leave empty (or add *Repository admin* if you want an emergency override) |
+| Target branches | **Add target → Include default branch** |
+| Restrict deletions | ✅ |
+| Block force pushes | ✅ |
+| Require a pull request before merging | ✅ — required approvals `0` (solo project), ✅ *Dismiss stale approvals*, ✅ *Require conversation resolution* |
+| Require status checks to pass | ✅ — ✅ *Require branches to be up to date*, add checks **Backend tests** and **Frontend tests** |
+| Require linear history | optional (only if you merge with *Squash* or *Rebase*) |
+
+The status checks only appear in the search box after CI has run once (e.g. on an open PR).
+
 ## Deploying
 
 - **Automatically:** merge a PR into `main`. CI runs the tests; when it passes, **Deploy** builds the API image,
   deploys it to Cloud Run, builds the frontend and deploys it to Firebase Hosting, then smoke-tests
-  `https://mahakal-ai.web.app/api/v1/health`.
+  `https://mahakal-ai.web.app/mahakal/api/v1/health`.
 - **Manually:** GitHub → **Actions → Deploy → Run workflow**.
 
 ## Before going public

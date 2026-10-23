@@ -5,12 +5,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# "env": secrets come from environment variables / backend/.env (local development).
+# "secret-manager": secrets are read from Google Secret Manager at startup (production).
+SECRETS_SOURCE = os.getenv('SECRETS_SOURCE', 'env').lower()
+if SECRETS_SOURCE == 'secret-manager':
+    from utility.secrets import load_secrets_into_environment
+    load_secrets_into_environment(os.getenv('GOOGLE_CLOUD_PROJECT', ''))
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = BASE_DIR.parent / 'frontend' / 'dist'
 
 ASSISTANT_NAME = 'M.A.H.A.K.A.L.'
 ASSISTANT_SPOKEN_NAME = 'Mahakal'
-API_COMMON_PREFIX = '/api/v1'
+API_COMMON_PREFIX = '/mahakal/api/v1'
 
 HOST = os.getenv('HOST', '0.0.0.0')
 PORT = int(os.getenv('PORT', '8000'))
