@@ -1,4 +1,4 @@
-# MAHAKAL
+# M.A.H.A.K.A.L.
 
 **M**odular **A**gentic **H**ub for **A**utomation, **K**nowledge & **A**daptive **L**ogic
 
@@ -33,6 +33,9 @@ npm run dev          # http://localhost:5173, proxies /api -> :8000
 Open http://localhost:5173 — click the orb to talk, or type below it.
 The orb pulses with your mic input while listening and with the voice
 output while speaking (Web Audio analyser).
+
+To show a portrait of Mahakal inside the reactor core instead of the built-in
+trishul emblem, add an image you have the rights to at `ui/public/mahakal.png`.
 
 ### Production (single server)
 

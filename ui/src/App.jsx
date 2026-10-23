@@ -1,8 +1,18 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Background from './Background'
+import { Boot, Diagnostics, Modules, TopBar, Typewriter } from './Hud'
 import Orb from './Orb'
 import './App.css'
 
+const STATUS = {
+  idle: 'STANDING BY — TAP THE CORE TO SPEAK',
+  listening: 'LISTENING — TAP TO TRANSMIT',
+  thinking: 'PROCESSING',
+  speaking: 'RESPONDING',
+}
+
 export default function App() {
+  const [booted, setBooted] = useState(false)
   const [messages, setMessages] = useState([])
   const [state, setState] = useState('idle') // idle | listening | thinking | speaking
   const [text, setText] = useState('')
@@ -12,6 +22,11 @@ export default function App() {
   const audioCtxRef = useRef(null)
   const analyserRef = useRef(null)
   const streamRef = useRef(null)
+  const logRef = useRef(null)
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages])
 
   const addMsg = (text, cls) =>
     setMessages((m) => [...m, { text, cls, id: crypto.randomUUID() }])
@@ -105,29 +120,49 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <header>M A H A K A L</header>
-      <Orb state={state} analyserRef={analyserRef} onClick={onOrbClick} />
-      <div className="status">
-        {state === 'idle' && 'Ready — click to talk'}
-        {state === 'listening' && 'Listening — click to stop'}
-        {state === 'thinking' && 'Thinking…'}
-        {state === 'speaking' && 'Speaking…'}
+    <div className="app" data-state={state}>
+      <Background />
+      <div className="corners" aria-hidden="true">
+        <i /><i /><i /><i />
       </div>
-      <div className="log">
-        {messages.map((m) => (
-          <div key={m.id} className={`msg ${m.cls}`}>{m.text}</div>
-        ))}
-      </div>
-      <div className="textbar">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendText()}
-          placeholder="Type a message…"
-        />
-        <button onClick={sendText}>Send</button>
-      </div>
+
+      {!booted ? (
+        <Boot onDone={() => setBooted(true)} />
+      ) : (
+        <>
+          <TopBar state={state} />
+          <Diagnostics state={state} />
+
+          <main className="main">
+            <Orb state={state} analyserRef={analyserRef} onClick={onOrbClick} />
+            <div className="status" key={state}>
+              <span className="status-bracket">[</span>
+              {STATUS[state]}
+              <span className="status-bracket">]</span>
+            </div>
+            <div className="log" ref={logRef}>
+              {messages.map((m) => (
+                <div key={m.id} className={`msg ${m.cls}`}>
+                  <span className="msg-tag">{m.cls === 'ai' ? 'M.A.H.A.K.A.L.' : 'YOU'}</span>
+                  {m.cls === 'ai' ? <Typewriter text={m.text} /> : m.text}
+                </div>
+              ))}
+            </div>
+            <div className="textbar">
+              <span className="prompt">&gt;</span>
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendText()}
+                placeholder="Issue a command…"
+              />
+              <button onClick={sendText}>Transmit</button>
+            </div>
+          </main>
+
+          <Modules state={state} />
+        </>
+      )}
     </div>
   )
 }
