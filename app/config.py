@@ -5,6 +5,8 @@ load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 TTS_VOICE = os.getenv("TTS_VOICE", "en-IN-PrabhatNeural")
 
 SYSTEM_PROMPT = (
