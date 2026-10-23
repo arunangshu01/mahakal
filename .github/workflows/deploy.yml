@@ -32,17 +32,32 @@ jobs:
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check deployment variables
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          GCP_DEPLOY_SA: ${{ vars.GCP_DEPLOY_SA }}
+        run: |
+          missing=0
+          for name in GCP_PROJECT_ID GCP_WIF_PROVIDER GCP_DEPLOY_SA; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository variable $name is not set (Settings → Secrets and variables → Actions → Variables). See docs/deploy-gcp.md step 7."
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.COMMIT }}
 
       # Keyless auth: GitHub's OIDC token is exchanged for short-lived Google credentials.
-      - uses: google-github-actions/auth@v2
+      - uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOY_SA }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v3
 
       - name: Build and push the API image
         run: |
@@ -69,7 +84,7 @@ jobs:
             --env-vars-file deploy/cloud-run.env.yaml \
             --quiet
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: frontend/.nvmrc
           cache: npm
