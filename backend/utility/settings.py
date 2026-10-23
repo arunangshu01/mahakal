@@ -55,7 +55,7 @@ COOKIE_SECURE = os.getenv('COOKIE_SECURE', 'False').lower() in ('true', '1')
 # Conversation storage: "firestore" in production, "memory" for local development and tests.
 GOOGLE_CLOUD_PROJECT = os.getenv('GOOGLE_CLOUD_PROJECT', '')
 STORAGE_BACKEND = os.getenv('STORAGE_BACKEND', 'memory').lower()
-HISTORY_LIMIT = 20
+HISTORY_LIMIT = int(os.getenv('HISTORY_LIMIT', '20'))
 GUEST_CONVERSATION_TTL_DAYS = 7
 USER_CONVERSATION_TTL_DAYS = 90
 
