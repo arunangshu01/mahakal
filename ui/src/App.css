@@ -1,0 +1,108 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --blue: #4da3ff;
+  --deep: #0a2a6b;
+  --green: #30d080;
+}
+
+body {
+  background: radial-gradient(ellipse at center, #0a1128 0%, #000 80%);
+  color: #e0e8ff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+header {
+  padding: 20px;
+  letter-spacing: 8px;
+  font-size: 20px;
+  font-weight: 300;
+  color: #7fb4ff;
+}
+
+.orb-wrap { margin: 24px 0 8px; }
+
+.orb {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  position: relative;
+  background: radial-gradient(circle at 35% 35%, var(--blue), var(--deep) 70%);
+  box-shadow: 0 0 40px #1a5fd0, inset 0 0 30px #7fc0ff;
+  transition: transform .1s linear;
+  font-size: 44px;
+  color: #fff;
+}
+
+.orb.listening {
+  background: radial-gradient(circle at 35% 35%, #7fc0ff, #13449e 70%);
+}
+.orb.speaking {
+  background: radial-gradient(circle at 35% 35%, #6ff0b0, #0d6b40 70%);
+}
+.orb.thinking { animation: think-spin 1.6s linear infinite; }
+
+@keyframes think-spin {
+  from { filter: hue-rotate(0deg) brightness(1); }
+  50%  { filter: hue-rotate(-30deg) brightness(1.3); }
+  to   { filter: hue-rotate(0deg) brightness(1); }
+}
+
+.status {
+  color: #7fb4ff;
+  font-size: 13px;
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.log {
+  width: min(680px, 92vw);
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.45; }
+.msg.user { align-self: flex-end; background: #1a3a6b; }
+.msg.ai { align-self: flex-start; background: #101f3d; border: 1px solid #24417a; }
+
+.textbar {
+  display: flex;
+  gap: 8px;
+  width: min(680px, 92vw);
+  padding: 14px 0;
+}
+.textbar input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #24417a;
+  background: #0c1830;
+  color: #e0e8ff;
+  outline: none;
+  font-size: 15px;
+}
+.textbar button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #1a5fd0;
+  color: #fff;
+  cursor: pointer;
+  font-size: 15px;
+}
+.textbar button:hover { background: #2a70e0; }

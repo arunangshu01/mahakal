@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAHAKAL</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: radial-gradient(ellipse at center, #0a1128 0%, #000 80%);
+    color: #e0e8ff;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+  }
+  header {
+    padding: 20px;
+    letter-spacing: 8px;
+    font-size: 20px;
+    font-weight: 300;
+    color: #7fb4ff;
+  }
+  #orb {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    margin: 30px 0;
+    background: radial-gradient(circle at 35% 35%, #4da3ff, #0a2a6b 70%);
+    box-shadow: 0 0 40px #1a5fd0, inset 0 0 30px #7fc0ff;
+    cursor: pointer;
+    transition: transform .15s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    user-select: none;
+  }
+  #orb.listening { animation: pulse 1.2s infinite; }
+  #orb.speaking { animation: speak .5s infinite alternate; }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 40px #1a5fd0; }
+    50%     { box-shadow: 0 0 90px #4da3ff; transform: scale(1.05); }
+  }
+  @keyframes speak {
+    from { box-shadow: 0 0 50px #30d080; }
+    to   { box-shadow: 0 0 100px #30d080; transform: scale(1.04); }
+  }
+  #status { color: #7fb4ff; font-size: 14px; margin-bottom: 14px; letter-spacing: 2px; }
+  #log {
+    width: min(640px, 92vw);
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
+  .user { align-self: flex-end; background: #1a3a6b; }
+  .ai   { align-self: flex-start; background: #101f3d; border: 1px solid #24417a; }
+  #textbar { display: flex; gap: 8px; width: min(640px, 92vw); padding: 16px 0; }
+  #textbar input {
+    flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #24417a;
+    background: #0c1830; color: #e0e8ff; outline: none;
+  }
+  #textbar button {
+    padding: 12px 20px; border: none; border-radius: 8px;
+    background: #1a5fd0; color: #fff; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <header>M A H A K A L</header>
+  <div id="orb" title="Click to talk">🎙</div>
+  <div id="status">READY</div>
+  <div id="log"></div>
+  <div id="textbar">
+    <input id="textin" placeholder="Type a message…" />
+    <button id="send">Send</button>
+  </div>
+
+<script>
+const orb = document.getElementById('orb');
+const statusEl = document.getElementById('status');
+const log = document.getElementById('log');
+const textin = document.getElementById('textin');
+
+let recorder, chunks = [], recording = false;
+
+function addMsg(text, cls) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.textContent = text;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function playAudio(b64) {
+  const audio = new Audio('data:audio/mpeg;base64,' + b64);
+  orb.classList.add('speaking');
+  statusEl.textContent = 'SPEAKING';
+  audio.onended = () => { orb.classList.remove('speaking'); statusEl.textContent = 'READY'; };
+  audio.play();
+}
+
+async function sendText(text) {
+  if (!text.trim()) return;
+  addMsg(text, 'user');
+  statusEl.textContent = 'THINKING';
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text})
+  }).then(r => r.json());
+  addMsg(res.reply, 'ai');
+  if (res.audio_b64) playAudio(res.audio_b64); else statusEl.textContent = 'READY';
+}
+
+orb.onclick = async () => {
+  if (recording) { recorder.stop(); return; }
+  const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+  recorder = new MediaRecorder(stream);
+  chunks = [];
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = async () => {
+    recording = false;
+    orb.classList.remove('listening');
+    statusEl.textContent = 'PROCESSING';
+    stream.getTracks().forEach(t => t.stop());
+    const blob = new Blob(chunks, {type: 'audio/webm'});
+    const fd = new FormData();
+    fd.append('file', blob, 'speech.webm');
+    const res = await fetch('/api/listen', {method: 'POST', body: fd}).then(r => r.json());
+    if (res.transcript) addMsg(res.transcript, 'user');
+    addMsg(res.reply, 'ai');
+    if (res.audio_b64) playAudio(res.audio_b64); else statusEl.textContent = 'READY';
+  };
+  recorder.start();
+  recording = true;
+  orb.classList.add('listening');
+  statusEl.textContent = 'LISTENING (click to stop)';
+};
+
+document.getElementById('send').onclick = () => { sendText(textin.value); textin.value = ''; };
+textin.onkeydown = e => { if (e.key === 'Enter') { sendText(textin.value); textin.value = ''; } };
+</script>
+</body>
+</html>
