@@ -12,7 +12,7 @@ const randomHexLine = () =>
 function moduleList(providers) {
   const online = (configured) => (providers === null ? 'CHECKING' : configured ? 'ONLINE' : 'OFFLINE')
   return [
-    { key: 'BRAIN', name: 'GROQ · LLAMA 3.3', state: online(providers?.groq) },
+    { key: 'BRAIN', name: 'GROQ · GPT-OSS', state: online(providers?.groq) },
     { key: 'BACKUP', name: 'GEMINI', state: online(providers?.gemini) },
     { key: 'EARS', name: 'WHISPER', state: online(providers?.groq || providers?.gemini) },
     { key: 'VOICE', name: 'EDGE TTS', state: 'ONLINE' },

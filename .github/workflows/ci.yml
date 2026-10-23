@@ -31,6 +31,9 @@ jobs:
       - name: Run tests
         run: python -m pytest -v
 
+      - name: Build the Docker image
+        run: docker build -t mahakal-api .
+
   frontend:
     name: Frontend tests
     runs-on: ubuntu-latest

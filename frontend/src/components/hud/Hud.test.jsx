@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, test, vi } from 'vitest'
+import AccountBadge from './AccountBadge'
 import Diagnostics from './Diagnostics'
 import Modules from './Modules'
 import TopBar from './TopBar'
@@ -22,12 +23,29 @@ test('TopBar shows the name, status and a HUD toggle', async () => {
 
 test('Modules reflects which providers the backend has configured', () => {
   const { rerender } = render(<Modules status="idle" providers={null} />)
-  expect(moduleState('GROQ · LLAMA 3.3')).toHaveTextContent('CHECKING')
+  expect(moduleState('GROQ · GPT-OSS')).toHaveTextContent('CHECKING')
 
   rerender(<Modules status="idle" providers={{ groq: false, gemini: true }} />)
-  expect(moduleState('GROQ · LLAMA 3.3')).toHaveTextContent('OFFLINE')
+  expect(moduleState('GROQ · GPT-OSS')).toHaveTextContent('OFFLINE')
   expect(moduleState('GEMINI')).toHaveTextContent('ONLINE')
   expect(moduleState('WHISPER')).toHaveTextContent('ONLINE')
+})
+
+test('AccountBadge shows guest messages left and a sign-in button', async () => {
+  const onSignIn = vi.fn()
+  render(<AccountBadge user={null} guest={{ remaining: 2, limit: 5 }} onSignIn={onSignIn} onSignOut={() => {}} />)
+  expect(screen.getByText('GUEST · 2/5')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'SIGN IN' }))
+  expect(onSignIn).toHaveBeenCalled()
+})
+
+test('AccountBadge shows the signed-in user and a sign-out button', async () => {
+  const onSignOut = vi.fn()
+  const user = { id: '1', name: 'Shiva Shankar', email: 's@example.com', picture: '' }
+  render(<AccountBadge user={user} guest={null} onSignIn={() => {}} onSignOut={onSignOut} />)
+  expect(screen.getByText('SHIVA')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Sign out Shiva Shankar' }))
+  expect(onSignOut).toHaveBeenCalled()
 })
 
 test('Diagnostics renders every metric', () => {

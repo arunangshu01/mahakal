@@ -1,5 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { API_BASE, ApiError, getHealth, resetConversation, sendMessage, sendRecording } from './api'
+import {
+  API_BASE,
+  ApiError,
+  getHealth,
+  getSession,
+  isSignInRequired,
+  resetConversation,
+  sendMessage,
+  sendRecording,
+  signInWithGoogle,
+  signOut,
+} from './api'
 
 const jsonResponse = (status, body) => ({
   ok: status >= 200 && status < 300,
@@ -45,6 +56,38 @@ describe('requests', () => {
     fetch.mockResolvedValue(jsonResponse(200, { message: 'cleared' }))
     await resetConversation()
     expect(fetch).toHaveBeenCalledWith(`${API_BASE}/reset`, { method: 'POST' })
+  })
+})
+
+describe('auth', () => {
+  test('getSession reads /auth/me', async () => {
+    fetch.mockResolvedValue(jsonResponse(200, { user: null, guest: { remaining: 5, limit: 5 } }))
+    await expect(getSession()).resolves.toMatchObject({ guest: { remaining: 5 } })
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE}/auth/me`, undefined)
+  })
+
+  test('signInWithGoogle posts the Google credential', async () => {
+    fetch.mockResolvedValue(jsonResponse(200, { user: { name: 'Shiva' } }))
+    await signInWithGoogle('id-token')
+    const [url, options] = fetch.mock.calls[0]
+    expect(url).toBe(`${API_BASE}/auth/google`)
+    expect(JSON.parse(options.body)).toEqual({ credential: 'id-token' })
+  })
+
+  test('signOut posts to /auth/logout', async () => {
+    fetch.mockResolvedValue(jsonResponse(200, { user: null }))
+    await signOut()
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE}/auth/logout`, { method: 'POST' })
+  })
+
+  test('guest limit errors are recognised', async () => {
+    fetch.mockResolvedValue(
+      jsonResponse(401, { detail: { error_message: 'Error: Sign in.', error_type: 'GuestLimitReachedError' } }),
+    )
+    const error = await sendMessage('hi').catch((e) => e)
+    expect(error.type).toBe('GuestLimitReachedError')
+    expect(isSignInRequired(error)).toBe(true)
+    expect(isSignInRequired(new ApiError('x', 500, 'Other'))).toBe(false)
   })
 })
 

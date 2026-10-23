@@ -1,0 +1,92 @@
+.signin-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  animation: fade-in 0.25s ease-out;
+}
+.signin-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  min-width: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 28px 26px 22px;
+  text-align: center;
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.12), rgba(2, 6, 13, 0.96));
+  clip-path: var(--cut);
+  box-shadow: inset 0 0 40px rgba(var(--accent-rgb), 0.15);
+  animation: msg-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.signin-dialog::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--gold), transparent);
+  animation: run-line 3s linear infinite;
+}
+.signin-eyebrow {
+  font: 11px var(--mono);
+  letter-spacing: 3px;
+  color: var(--gold);
+}
+.signin-dialog h2 {
+  margin: 8px 0 12px;
+  font: 700 clamp(16px, 4vw, 20px) var(--display);
+  letter-spacing: 2px;
+  color: #effcff;
+  text-shadow: 0 0 12px var(--accent);
+}
+.signin-text {
+  font-size: 16px;
+  line-height: 1.45;
+  color: rgba(216, 246, 255, 0.85);
+}
+.signin-button {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 320px;
+  min-height: 44px;
+  margin: 22px auto 6px;
+  overflow: hidden;
+}
+@media (max-width: 420px) {
+  .signin-dialog { padding: 24px 16px 18px; }
+}
+.signin-error {
+  margin-top: 10px;
+  font: 13px var(--mono);
+  color: #ff7a7a;
+}
+.signin-actions { margin-top: 14px; }
+.signin-secondary {
+  min-height: 44px;
+  padding: 0 18px;
+  font: 600 11px var(--display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .signin-secondary:hover { background: rgba(var(--accent-rgb), 0.12); }
+}
+.signin-legal {
+  margin-top: 16px;
+  font-size: 12px;
+  color: rgba(216, 246, 255, 0.55);
+}
+.signin-legal a { color: var(--gold); }

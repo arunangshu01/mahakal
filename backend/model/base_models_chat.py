@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 from utility.settings import MAX_MESSAGE_LENGTH
@@ -18,3 +20,4 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     audio_b64: str
+    guest_remaining: Optional[int] = None

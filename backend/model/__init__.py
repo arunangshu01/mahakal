@@ -1,3 +1,4 @@
+import model.base_models_auth as base_models_auth
 import model.base_models_chat as base_models_chat
 import model.base_models_conversation as base_models_conversation
 import model.base_models_errors as base_models_errors

@@ -1,3 +1,4 @@
+import routers.auth as auth
 import routers.chat as chat
 import routers.conversation as conversation
 import routers.health_check as health_check

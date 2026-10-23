@@ -51,6 +51,33 @@ test('shows backend errors as an assistant message', async () => {
   expect(result.current.messages.at(-1)).toMatchObject({ text: 'Providers down.', from: 'ai' })
 })
 
+test('reports how many guest messages are left', async () => {
+  fetch.mockResolvedValue(jsonResponse(200, { reply: 'Namaste', audio_b64: '', guest_remaining: 2 }))
+  const onGuestRemaining = vi.fn()
+  const { result } = renderHook(() => useAssistant({ onGuestRemaining }))
+
+  act(() => {
+    result.current.sendText('Hello')
+  })
+  await waitFor(() => expect(onGuestRemaining).toHaveBeenCalledWith(2))
+})
+
+test('asks guests to sign in when their free messages run out', async () => {
+  fetch.mockResolvedValue(
+    jsonResponse(401, { detail: { error_message: 'Error: Sign in with Google.', error_type: 'GuestLimitReachedError' } }),
+  )
+  const onSignInRequired = vi.fn()
+  const onGuestRemaining = vi.fn()
+  const { result } = renderHook(() => useAssistant({ onSignInRequired, onGuestRemaining }))
+
+  act(() => {
+    result.current.sendText('Hello')
+  })
+  await waitFor(() => expect(onSignInRequired).toHaveBeenCalled())
+  expect(onGuestRemaining).toHaveBeenCalledWith(0)
+  expect(result.current.messages.at(-1).text).toBe('Sign in with Google.')
+})
+
 test('explains when the microphone is not available', async () => {
   vi.stubGlobal('navigator', { ...navigator, mediaDevices: undefined })
   const { result } = renderHook(() => useAssistant())

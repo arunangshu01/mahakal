@@ -1,10 +1,27 @@
-import pytest
-from fastapi.testclient import TestClient
+import os
 
-from app.main import app
-from source.brain import brain
-from source.voice import voice
-from utility.settings import API_COMMON_PREFIX
+# Tests never touch real services, whatever is in backend/.env (load_dotenv won't override these).
+os.environ.update({
+    "SECRETS_SOURCE": "env",
+    "STORAGE_BACKEND": "memory",
+    "SESSION_SECRET": "test-session-secret",
+    "GOOGLE_CLIENT_ID": "test-client-id.apps.googleusercontent.com",
+    "GUEST_MESSAGE_LIMIT": "5",
+    "COOKIE_SECURE": "false",
+})
+
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+
+import routers.auth as auth_router  # noqa: E402
+from app.main import app  # noqa: E402
+from source import assistant  # noqa: E402
+from source.brain import brain  # noqa: E402
+from source.storage import store  # noqa: E402
+from source.voice import voice  # noqa: E402
+from utility.settings import API_COMMON_PREFIX  # noqa: E402
+
+TEST_USER = {"id": "1234567890", "email": "shiva@example.com", "name": "Shiva", "picture": "https://example.com/a.png"}
 
 
 @pytest.fixture(scope="session")
@@ -18,10 +35,12 @@ def client():
 
 
 @pytest.fixture(autouse=True)
-def clean_history():
-    brain.reset()
+def clean_state():
+    store.clear()
+    assistant.user_limiter.reset()
+    assistant.guest_ip_limiter.reset()
     yield
-    brain.reset()
+    store.clear()
 
 
 @pytest.fixture()
@@ -34,6 +53,22 @@ def fake_voice(monkeypatch):
 @pytest.fixture()
 def fake_llm(monkeypatch):
     """Make the brain answer without calling any real provider."""
-    def fake_run(task, groq_call, gemini_call):
-        return f"echo: {brain.history[-1]['content']}"
-    monkeypatch.setattr(brain.llm, "run", fake_run)
+    monkeypatch.setattr(brain, "reply_to", lambda history: f"echo: {history[-1]['content']}")
+
+
+@pytest.fixture()
+def fake_google(monkeypatch):
+    """Accept the credential "valid-token" as TEST_USER; reject anything else."""
+    from utility.errors import InvalidGoogleTokenError
+
+    def verify(credential):
+        if credential != "valid-token":
+            raise InvalidGoogleTokenError("bad token")
+        return dict(TEST_USER)
+    monkeypatch.setattr(auth_router, "verify_google_credential", verify)
+
+
+@pytest.fixture()
+def signed_in_client(client, api_base, fake_google):
+    assert client.post(f"{api_base}/auth/google", json={"credential": "valid-token"}).status_code == 200
+    return client
