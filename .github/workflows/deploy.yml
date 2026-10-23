@@ -67,7 +67,7 @@ jobs:
             --min-instances 0 \
             --max-instances 3 \
             --timeout 60 \
-            --set-env-vars "SECRETS_SOURCE=secret-manager,STORAGE_BACKEND=firestore,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},COOKIE_SECURE=true" \
+            --env-vars-file deploy/cloud-run.env.yaml \
             --quiet
 
       - uses: actions/setup-node@v4

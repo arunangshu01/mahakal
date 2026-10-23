@@ -131,6 +131,14 @@ GitHub → repo → **Settings → Rules → Rulesets → New ruleset → New br
 
 The status checks only appear in the search box after CI has run once (e.g. on an open PR).
 
+## Configuration
+
+- **Backend (Cloud Run):** non-secret settings live in `deploy/cloud-run.env.yaml`; the deploy workflow
+  applies it with `--env-vars-file`. Change a value there and merge to `main` to roll it out.
+- **Secrets:** Secret Manager only (read by the app at startup).
+- **Frontend (Firebase Hosting):** no environment variables. It calls the API on the same domain
+  (`/mahakal/api/v1`) and gets the Google client ID from `/mahakal/api/v1/auth/me`.
+
 ## Deploying
 
 - **Automatically:** merge a PR into `main`. CI runs the tests; when it passes, **Deploy** builds the API image,

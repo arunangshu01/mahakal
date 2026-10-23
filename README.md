@@ -50,6 +50,7 @@ frontend/
   src/components/      Reactor, HUD panels, chat log, command bar, sign-in dialog, boot sequence
   public/              privacy.html, terms.html, favicon
 firebase.json          Hosting config: serves the UI, rewrites /mahakal/api/** to Cloud Run
+deploy/cloud-run.env.yaml  Cloud Run environment variables (no secrets)
 .github/workflows/     ci.yml (tests on every PR), deploy.yml (deploys after CI passes on main)
 docs/deploy-gcp.md     One-time Google Cloud setup and deployment guide
 ```
