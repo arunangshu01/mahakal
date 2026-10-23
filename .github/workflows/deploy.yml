@@ -25,13 +25,12 @@ env:
 jobs:
   deploy:
     name: Deploy to Google Cloud
+    # Only main is deployed. Google enforces this too: the Workload Identity provider only issues
+    # credentials to workflows running on refs/heads/main of this repository.
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://mahakal-ai.web.app
     steps:
       - uses: actions/checkout@v4
         with:

@@ -95,7 +95,7 @@ gcloud iam workload-identity-pools providers create-oidc mahakal-repo --location
   --workload-identity-pool=github --display-name="mahakal repo" \
   --issuer-uri=https://token.actions.githubusercontent.com \
   --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
-  --attribute-condition="assertion.repository=='$GITHUB_REPO'"
+  --attribute-condition="assertion.repository=='$GITHUB_REPO' && assertion.ref=='refs/heads/main'"
 gcloud iam service-accounts add-iam-policy-binding $DEPLOY_SA --role=roles/iam.workloadIdentityUser \
   --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/$GITHUB_REPO"
 
@@ -114,31 +114,27 @@ These are identifiers, not secrets.
 | `GCP_WIF_PROVIDER` | printed by step 6 |
 | `GCP_DEPLOY_SA` | printed by step 6 |
 
-### 8. GitHub `production` environment
+### 8. Protecting `main`
 
-GitHub → repo → **Settings → Environments → New environment** → name it `production`.
+Deploys are already limited to `main` on the Google side: the provider's attribute condition is
+`assertion.repository=='arunangshu01/mahakal' && assertion.ref=='refs/heads/main'`, so workflows on
+any other branch (or from forks) cannot get Google credentials.
 
-- **Deployment branches and tags** → *Selected branches and tags* → add `main`. Only `main` can deploy,
-  even if someone runs the workflow manually from another branch.
-- Optional: **Required reviewers** → add yourself to approve each deploy before it goes live.
-
-### 9. Ruleset protecting `main`
-
-GitHub → repo → **Settings → Rules → Rulesets → New ruleset → New branch ruleset**.
+On GitHub, **rulesets and environments are not enforced for private repositories on the Free plan**.
+To have GitHub block merges until CI passes, either upgrade to **GitHub Pro** or make the repository
+public, then create a branch ruleset (Settings → Rules → Rulesets → New branch ruleset):
 
 | Setting | Value |
 |---|---|
 | Ruleset name | `protect-main` |
 | Enforcement status | **Active** |
-| Bypass list | leave empty (or add *Repository admin* if you want an emergency override) |
-| Target branches | **Add target → Include default branch** |
-| Restrict deletions | ✅ |
-| Block force pushes | ✅ |
-| Require a pull request before merging | ✅ — required approvals `0` (solo project), ✅ *Dismiss stale approvals*, ✅ *Require conversation resolution* |
-| Require status checks to pass | ✅ — ✅ *Require branches to be up to date*, add checks **Backend tests** and **Frontend tests** |
-| Require linear history | optional (only if you merge with *Squash* or *Rebase*) |
+| Target branches | **Include default branch** |
+| Restrict deletions / Block force pushes | ✅ / ✅ |
+| Require a pull request before merging | ✅ — 0 approvals, ✅ *Require conversation resolution* |
+| Require status checks to pass | ✅ — ✅ *Require branches to be up to date*, checks **Backend tests** and **Frontend tests** |
 
-The status checks only appear in the search box after CI has run once (e.g. on an open PR).
+Until then: always merge through a PR and wait for both checks to go green. Even if something is
+merged with failing tests, the Deploy workflow only runs after CI succeeds on `main`.
 
 ## Configuration
 
