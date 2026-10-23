@@ -6,7 +6,7 @@ from model.base_models_errors import ErrorResponse
 from source.assistant import guest_messages_remaining
 from source.google_auth import verify_google_credential
 from source.storage import store
-from utility.errors import assistant_error
+from utility.errors import api_error, assistant_error
 from utility.identity import Identity, get_identity
 from utility.logger import Logger
 from utility.session import write_session
@@ -64,6 +64,23 @@ async def sign_in_with_google(
     write_session(response, signed_in.to_session())
     logger.info("User signed in with Google.")
     return session_response(signed_in)
+
+
+@router.delete(
+    '/account',
+    status_code=status.HTTP_200_OK,
+    response_model=SessionResponse,
+    responses={401: {"model": ErrorResponse}},
+)
+async def delete_account(response: Response, identity: Identity = Depends(get_identity)):
+    """Permanently delete your profile, conversation and memories, and sign out."""
+    if identity.is_guest:
+        raise api_error(status.HTTP_401_UNAUTHORIZED, 'Error: Sign in to delete your account.', 'SignInRequired')
+    await run_in_threadpool(store.delete_user, identity.user['id'])
+    logger.info("User account and data deleted.")
+    guest = Identity(guest_id=identity.guest_id)
+    write_session(response, guest.to_session())
+    return session_response(guest)
 
 
 @router.post('/logout', status_code=status.HTTP_200_OK, response_model=SessionResponse)

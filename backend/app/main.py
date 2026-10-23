@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from routers import auth, chat, conversation, health_check, listen
+from routers import auth, chat, conversation, health_check, listen, memories
 from utility.logger import Logger
 from utility.settings import (
     API_COMMON_PREFIX,
@@ -25,11 +25,11 @@ tags_metadata = [
     },
     {
         "name": "Authentication",
-        "description": "Google sign-in, guest status and sign-out"
+        "description": "Google sign-in, guest status, sign-out and account deletion"
     },
     {
         "name": "Chat",
-        "description": "Send a text message and get a spoken reply"
+        "description": "Send a text message and get a spoken reply (complete or streamed)"
     },
     {
         "name": "Voice",
@@ -37,7 +37,11 @@ tags_metadata = [
     },
     {
         "name": "Conversation",
-        "description": "Manage the conversation history"
+        "description": "Read or clear the conversation history"
+    },
+    {
+        "name": "Memory",
+        "description": "Long-term facts remembered about a signed-in user"
     }
 ]
 
@@ -56,6 +60,7 @@ app.include_router(auth.router, prefix=API_COMMON_PREFIX)
 app.include_router(chat.router, prefix=API_COMMON_PREFIX)
 app.include_router(listen.router, prefix=API_COMMON_PREFIX)
 app.include_router(conversation.router, prefix=API_COMMON_PREFIX)
+app.include_router(memories.router, prefix=API_COMMON_PREFIX)
 
 app.add_middleware(
     CORSMiddleware,

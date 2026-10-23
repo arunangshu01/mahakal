@@ -4,3 +4,4 @@ import model.base_models_conversation as base_models_conversation
 import model.base_models_errors as base_models_errors
 import model.base_models_health_check as base_models_health_check
 import model.base_models_listen as base_models_listen
+import model.base_models_memories as base_models_memories

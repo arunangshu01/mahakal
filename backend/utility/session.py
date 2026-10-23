@@ -8,7 +8,15 @@ from typing import Optional
 
 from fastapi import Request, Response
 
-from utility.settings import COOKIE_SECURE, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS, SESSION_SECRET
+from utility.settings import (
+    COOKIE_SECURE,
+    SESSION_COOKIE_NAME,
+    SESSION_MAX_AGE_SECONDS,
+    SESSION_SECRET,
+    STREAM_TOKEN_TTL_SECONDS,
+)
+
+STREAM_TOKEN_PURPOSE = 'stream'
 
 
 def _b64encode(data: bytes) -> str:
@@ -48,7 +56,23 @@ def new_session() -> dict:
 
 def read_session(request: Request) -> Optional[dict]:
     token = request.cookies.get(SESSION_COOKIE_NAME)
-    return decode_session(token) if token else None
+    data = decode_session(token) if token else None
+    return data if data and 'purpose' not in data else None
+
+
+def create_stream_token(data: dict) -> str:
+    """Short-lived bearer token so the browser can stream straight from Cloud Run (no cookie there)."""
+    return encode_session({
+        'gid': data['gid'],
+        'user': data.get('user'),
+        'purpose': STREAM_TOKEN_PURPOSE,
+        'exp': int(time.time()) + STREAM_TOKEN_TTL_SECONDS,
+    })
+
+
+def read_stream_token(token: str) -> Optional[dict]:
+    data = decode_session(token)
+    return data if data and data.get('purpose') == STREAM_TOKEN_PURPOSE else None
 
 
 def write_session(response: Response, data: dict) -> None:

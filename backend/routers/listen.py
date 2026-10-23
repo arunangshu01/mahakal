@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, File, Request, UploadFile, status
+from typing import Optional
+
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
 from starlette.concurrency import run_in_threadpool
 
 from model.base_models_errors import ErrorResponse
@@ -23,7 +25,12 @@ NOT_HEARD_REPLY = "I didn't catch that."
     response_model=ListenResponse,
     responses={code: {"model": ErrorResponse} for code in (400, 401, 413, 429, 500, 502, 503)},
 )
-async def listen(request: Request, file: UploadFile = File(...), identity: Identity = Depends(get_identity)):
+async def listen(
+    request: Request,
+    file: UploadFile = File(...),
+    timezone: Optional[str] = Form(None, max_length=64),
+    identity: Identity = Depends(get_identity),
+):
     """Recorded speech in, transcript plus reply text and spoken audio out."""
     audio_bytes = await file.read()
     if not audio_bytes:
@@ -39,7 +46,7 @@ async def listen(request: Request, file: UploadFile = File(...), identity: Ident
                 transcript='', reply=NOT_HEARD_REPLY, audio_b64='',
                 guest_remaining=guest_messages_remaining(identity),
             ).model_dump()
-        result = await respond(identity, transcript)
+        result = await respond(identity, transcript, timezone)
     except Exception as e:
         logger.error(f"Listen failed ({type(e).__name__}: {e})")
         raise assistant_error(e)

@@ -47,3 +47,12 @@
   .log { padding-top: 10px; gap: 10px; }
   .msg { max-width: 90%; padding: 8px 12px 10px; }
 }
+
+.msg-tool {
+  display: block;
+  margin-bottom: 4px;
+  font: 11px var(--mono);
+  letter-spacing: 1px;
+  color: var(--gold);
+  animation: blink 1.2s ease-in-out infinite;
+}

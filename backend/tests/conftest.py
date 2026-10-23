@@ -52,8 +52,16 @@ def fake_voice(monkeypatch):
 
 @pytest.fixture()
 def fake_llm(monkeypatch):
-    """Make the brain answer without calling any real provider."""
-    monkeypatch.setattr(brain, "reply_to", lambda history: f"echo: {history[-1]['content']}")
+    """Make the brain answer without calling any real provider (records the context it was given)."""
+    from source.brain import StreamEvent
+    seen = []
+
+    def fake_generate(history, context):
+        seen.append(context)
+        yield StreamEvent("delta", text="echo: ")
+        yield StreamEvent("delta", text=history[-1]["content"])
+    monkeypatch.setattr(brain, "generate", fake_generate)
+    return seen
 
 
 @pytest.fixture()

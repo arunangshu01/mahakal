@@ -3,7 +3,8 @@ from typing import Optional
 
 from fastapi import Request, Response
 
-from utility.session import new_session, read_session, write_session
+from utility.errors import api_error
+from utility.session import new_session, read_session, read_stream_token, write_session
 
 
 @dataclass
@@ -31,6 +32,20 @@ def get_identity(request: Request, response: Response) -> Identity:
     identity = Identity(guest_id=data['gid'], user=data.get('user'))
     write_session(response, identity.to_session())
     return identity
+
+
+def get_stream_identity(request: Request, response: Response) -> Identity:
+    """Like get_identity, but also accepts a stream token (Authorization: Bearer ...).
+
+    Production streams straight from Cloud Run, where the Firebase-domain cookie isn't sent.
+    """
+    authorization = request.headers.get('authorization', '')
+    if authorization.lower().startswith('bearer '):
+        data = read_stream_token(authorization[7:].strip())
+        if not data:
+            raise api_error(401, 'Error: Your session expired. Please try again.', 'InvalidStreamToken')
+        return Identity(guest_id=data['gid'], user=data.get('user'))
+    return get_identity(request, response)
 
 
 def client_ip(request: Request) -> str:

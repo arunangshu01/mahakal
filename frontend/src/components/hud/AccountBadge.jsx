@@ -1,19 +1,16 @@
 import './hud.css'
 
-export default function AccountBadge({ user, guest, onSignIn, onSignOut }) {
+export default function AccountBadge({ user, guest, onSignIn, onOpenAccount }) {
   if (user) {
     return (
-      <div className="account">
+      <button type="button" className="account account-open" onClick={onOpenAccount} aria-label={`Account: ${user.name}`}>
         {user.picture ? (
           <img className="account-avatar" src={user.picture} alt="" referrerPolicy="no-referrer" />
         ) : (
           <span className="account-avatar account-initial">{user.name.charAt(0)}</span>
         )}
         <span className="account-name">{user.name.split(' ')[0].toUpperCase()}</span>
-        <button type="button" className="account-button" onClick={onSignOut} aria-label={`Sign out ${user.name}`}>
-          SIGN OUT
-        </button>
-      </div>
+      </button>
     )
   }
   if (guest) {

@@ -58,9 +58,10 @@ def test_chat_rejects_invalid_messages(client, api_base, payload):
     (ValueError("boom"), 500),
 ])
 def test_chat_maps_provider_errors(client, api_base, monkeypatch, error, status_code):
-    def failing_run(task, groq_call, gemini_call):
+    def failing_generate(history, context):
         raise error
-    monkeypatch.setattr(brain.llm, "run", failing_run)
+        yield
+    monkeypatch.setattr(brain, "generate", failing_generate)
 
     res = client.post(f"{api_base}/chat", json={"text": "Hello"})
     assert res.status_code == status_code

@@ -22,5 +22,6 @@ def test_health_check_reports_configured_providers(client, api_base, monkeypatch
 def test_docs_are_served_under_the_api_prefix(client, api_base):
     assert client.get(f"{api_base}/docs").status_code == 200
     paths = client.get(f"{api_base}/openapi.json").json()["paths"]
-    expected = {"health", "chat", "listen", "reset", "auth/me", "auth/google", "auth/logout"}
+    expected = {"health", "chat", "chat/stream", "chat/stream-token", "listen", "reset", "conversation",
+                "memories", "auth/me", "auth/google", "auth/logout", "auth/account"}
     assert {f"{api_base}/{path}" for path in expected} <= set(paths)
