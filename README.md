@@ -8,8 +8,8 @@ A personal voice AI assistant — 100% free-tier stack.
 
 | Component | Service | Cost |
 |---|---|---|
-| Brain (LLM) | Groq API (Llama 3.3 70B) | Free tier |
-| Ears (STT) | Groq hosted Whisper | Free tier |
+| Brain (LLM) | Groq API (Llama 3.3 70B), Gemini fallback | Free tier |
+| Ears (STT) | Groq hosted Whisper, Gemini fallback | Free tier |
 | Voice (TTS) | Microsoft Edge TTS | Free |
 | Backend | FastAPI | — |
 | UI | React + Vite (`ui/`) | — |
@@ -20,7 +20,8 @@ A personal voice AI assistant — 100% free-tier stack.
 ```bash
 # Backend
 pip install -r requirements.txt
-cp .env.example .env   # add your GROQ_API_KEY from https://console.groq.com/keys
+cp .env.example .env   # add GROQ_API_KEY (https://console.groq.com/keys)
+                       # and optionally GEMINI_API_KEY (https://aistudio.google.com/apikey)
 uvicorn app.main:app --reload
 
 # React UI (separate terminal)
