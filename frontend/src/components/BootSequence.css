@@ -1,0 +1,49 @@
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  padding: 24px;
+  background: #02060d;
+  cursor: pointer;
+  transition: opacity 0.6s, transform 0.6s;
+}
+.boot:focus-visible { outline: none; }
+.boot.leaving { opacity: 0; transform: scale(1.08); }
+.boot-ring {
+  width: clamp(80px, 18vmin, 140px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px dashed var(--accent);
+  border-top-color: var(--gold);
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.5), inset 0 0 30px rgba(var(--accent-rgb), 0.3);
+  animation: spin 1.4s linear infinite;
+}
+.boot-lines {
+  width: min(440px, 100%);
+  min-height: 150px;
+  font: clamp(11px, 2.8vw, 13px) / 1.7 var(--mono);
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.boot-lines div { animation: msg-in 0.25s ease-out both; white-space: pre-wrap; }
+.boot-lines div:nth-child(6) { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+.cursor { animation: blink 0.6s step-end infinite; }
+.boot-bar { width: min(440px, 100%); height: 3px; background: rgba(var(--accent-rgb), 0.15); }
+.boot-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  box-shadow: 0 0 10px var(--accent);
+  transition: width 0.25s;
+}
+.boot-hint { font: 10px var(--mono); letter-spacing: 3px; color: rgba(var(--accent-rgb), 0.5); }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .boot { gap: 12px; }
+  .boot-lines { min-height: 0; }
+}

@@ -1,0 +1,151 @@
+/*
+ * Page layout. Breakpoints:
+ *   > 1150px           three columns: diagnostics | reactor + chat | modules
+ *   <= 1150px          single column, side panels move into a slide-in HUD drawer
+ *   <= 640px           phone: compact top bar and smaller reactor
+ *   short landscape    phones on their side: reactor and chat sit side by side
+ *   >= 1800px          large / 4K screens: everything scales up
+ */
+.app {
+  --panel-width: clamp(230px, 19vw, 300px);
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-columns: var(--panel-width) minmax(0, 1fr) var(--panel-width);
+  grid-template-rows: auto minmax(0, 1fr);
+  isolation: isolate;
+}
+
+.hud-panels {
+  display: contents;
+}
+.panel-left { grid-column: 1; grid-row: 2; }
+.panel-right { grid-column: 3; grid-row: 2; }
+.hud-backdrop { display: none; }
+
+.main {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  z-index: 2;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+}
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+.conversation {
+  width: min(760px, 100%);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.status {
+  font: 600 12px var(--display);
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-shadow: 0 0 10px rgba(var(--accent-rgb), 0.8);
+  margin: 8px 0 6px;
+  text-align: center;
+  animation: status-in 0.5s ease-out both;
+}
+.status-bracket {
+  color: var(--gold);
+  margin: 0 10px;
+  animation: blink 1.4s ease-in-out infinite;
+}
+[data-status='thinking'] .status::after {
+  content: '...';
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  vertical-align: bottom;
+  animation: dots 1.2s steps(4) infinite;
+}
+
+@keyframes status-in { from { opacity: 0; letter-spacing: 12px; } }
+@keyframes dots { to { width: 1.4em; } }
+
+/* ---------- Tablets and small laptops: HUD drawer ---------- */
+@media (max-width: 1150px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .main { grid-column: 1; }
+
+  .hud-panels {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    width: min(340px, 88vw);
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: rgba(2, 6, 13, 0.94);
+    backdrop-filter: blur(10px);
+    border-left: 1px solid rgba(var(--accent-rgb), 0.35);
+    transform: translateX(105%);
+    visibility: hidden;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.35s;
+  }
+  .hud-panels.open {
+    transform: none;
+    visibility: visible;
+  }
+  .hud-panels .panel {
+    align-self: stretch;
+    flex-shrink: 0;
+    margin: 12px;
+    max-height: none;
+    overflow: visible;
+    animation: none;
+  }
+  .hud-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgba(0, 0, 0, 0.55);
+    animation: fade-in 0.3s ease-out;
+  }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+  .status { font-size: 10px; letter-spacing: 2px; margin: 4px 0; }
+  .status-bracket { margin: 0 6px; }
+}
+
+/* ---------- Phones in landscape ---------- */
+@media (orientation: landscape) and (max-height: 560px) {
+  .main {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 20px;
+    padding-top: 4px;
+  }
+  .stage { justify-content: center; max-width: 45vw; }
+  .status { font-size: 10px; letter-spacing: 2px; }
+  .conversation { width: auto; flex: 1; min-width: 0; }
+}
+
+/* ---------- Large and 4K screens ---------- */
+@media (min-width: 1800px) {
+  .app { --panel-width: clamp(300px, 17vw, 380px); }
+  .status { font-size: 14px; }
+  .conversation { width: min(960px, 100%); }
+}
+
+@keyframes fade-in { from { opacity: 0; } }
