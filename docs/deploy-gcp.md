@@ -15,6 +15,8 @@ in asia-south1, Firebase Hosting site `mahakal-ai`, OAuth client, and these secr
 
 ## One-time setup (run in Terminal)
 
+Status: steps 1–6 were completed on 23 October 2026.
+
 ```bash
 export PROJECT_ID=mahakal-ai-230925
 export REGION=asia-south1
@@ -38,6 +40,13 @@ gcloud services enable run.googleapis.com artifactregistry.googleapis.com iamcre
 ```bash
 gcloud artifacts repositories create mahakal --repository-format=docker --location=$REGION \
   --description="M.A.H.A.K.A.L. images"
+
+# Keep the 5 newest images, delete anything older than 30 days (stays in the free tier).
+cat > /tmp/cleanup.json <<'JSON'
+[{"name":"keep-recent-5","action":{"type":"Keep"},"mostRecentVersions":{"keepCount":5}},
+ {"name":"delete-older-than-30d","action":{"type":"Delete"},"condition":{"olderThan":"30d"}}]
+JSON
+gcloud artifacts repositories set-cleanup-policies mahakal --location=$REGION --policy=/tmp/cleanup.json --no-dry-run
 ```
 
 ### 3. Runtime service account (what the app runs as)
@@ -85,7 +94,7 @@ gcloud iam workload-identity-pools create github --location=global --display-nam
 gcloud iam workload-identity-pools providers create-oidc mahakal-repo --location=global \
   --workload-identity-pool=github --display-name="mahakal repo" \
   --issuer-uri=https://token.actions.githubusercontent.com \
-  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
   --attribute-condition="assertion.repository=='$GITHUB_REPO'"
 gcloud iam service-accounts add-iam-policy-binding $DEPLOY_SA --role=roles/iam.workloadIdentityUser \
   --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/$GITHUB_REPO"
