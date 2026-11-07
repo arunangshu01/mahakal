@@ -15,6 +15,7 @@ beforeEach(() => {
     const player = {
       setVolume: vi.fn((next) => { volume = next }),
       getVolume: vi.fn(() => volume),
+      getVideoData: vi.fn(() => ({ title: 'Initial song title', video_id: 'STq6tE6un6E' })),
       playVideo: vi.fn(),
       pauseVideo: vi.fn(),
       destroy: vi.fn(() => frame.remove()),
@@ -38,7 +39,7 @@ test('loads the supplied recording on demand without autoplay and stops on close
   expect(container.querySelector('iframe')).toBeNull()
   expect(window.YT.Player).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button', { name: 'Listen to music' }))
-  const frame = screen.getByTitle('Shambhu Stuti by Ketan Kumar')
+  const frame = screen.getByTitle('YouTube music player')
   expect(frame.src).toContain('/STq6tE6un6E?autoplay=0&enablejsapi=1')
   expect(frame.src).toContain('origin=')
   expect(players[0].playVideo).not.toHaveBeenCalled()
@@ -47,18 +48,57 @@ test('loads the supplied recording on demand without autoplay and stops on close
   expect(container.querySelector('iframe')).toBeNull()
 })
 
+test('shows the current video title and updates it when a recommendation plays', async () => {
+  render(<MusicPlayer status="idle" />)
+  expect(screen.queryByText('Shambhu Stuti · Ketan Kumar')).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  expect(screen.getByText('Initial song title')).toBeInTheDocument()
+  players[0].getVideoData.mockReturnValue({ title: 'Another song · Another artist', video_id: 'abcdefghijk' })
+  act(() => players[0].options.events.onStateChange({ target: players[0], data: 1 }))
+  expect(screen.getByText('Another song · Another artist')).toBeInTheDocument()
+  expect(screen.queryByText('Initial song title')).toBeNull()
+  expect(screen.getByRole('link', { name: 'Open on streaming service' })).toHaveAttribute('href', 'https://www.youtube.com/watch?v=abcdefghijk')
+  expect(window.YT.Player).toHaveBeenCalledOnce()
+})
+
+test('refreshes delayed metadata and uses a neutral title when metadata is missing', async () => {
+  const { unmount } = render(<MusicPlayer status="idle" />)
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  players[0].getVideoData.mockReturnValue({ video_id: 'abcdefghijk' })
+  act(() => vi.advanceTimersByTime(1000))
+  expect(screen.queryByText('Initial song title')).toBeNull()
+  players[0].getVideoData.mockReturnValue({ title: 'Late title', video_id: 'abcdefghijk' })
+  act(() => vi.advanceTimersByTime(1000))
+  expect(screen.getByText('Late title')).toBeInTheDocument()
+  const calls = players[0].getVideoData.mock.calls.length
+  unmount()
+  act(() => vi.advanceTimersByTime(2000))
+  expect(players[0].getVideoData).toHaveBeenCalledTimes(calls)
+})
+
+test('closing and reopening does not retain the previous recommendation title', async () => {
+  render(<MusicPlayer status="idle" />)
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  players[0].getVideoData.mockReturnValue({ title: 'Recommended song', video_id: 'abcdefghijk' })
+  act(() => players[0].options.events.onStateChange({ target: players[0], data: 1 }))
+  await user.click(screen.getByRole('button', { name: 'Close music' }))
+  expect(screen.queryByText('Recommended song')).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  expect(screen.getByText('Initial song title')).toBeInTheDocument()
+})
+
 test('ducks without restarting or pausing the player and restores its previous volume', async () => {
   const { rerender } = render(<MusicPlayer status="idle" songUrl={songUrl} />)
   await user.click(screen.getByRole('button', { name: 'Listen to music' }))
   fade()
-  const frame = screen.getByTitle('Shambhu Stuti by Ketan Kumar')
+  const frame = screen.getByTitle('YouTube music player')
   const player = players[0]
   player.setVolume(70)
   for (const status of ['listening', 'thinking', 'speaking']) {
     rerender(<MusicPlayer status={status} songUrl={songUrl} />)
     fade()
     expect(player.getVolume()).toBe(8)
-    expect(screen.getByTitle('Shambhu Stuti by Ketan Kumar')).toBe(frame)
+    expect(screen.getByTitle('YouTube music player')).toBe(frame)
   }
   rerender(<MusicPlayer status="idle" songUrl={songUrl} />)
   fade()
