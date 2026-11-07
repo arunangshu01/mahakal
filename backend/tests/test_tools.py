@@ -61,6 +61,33 @@ def test_weather_for_an_unknown_place():
     assert "Could not find" in run(tools, "get_weather", location="Atlantis")["error"]
 
 
+def test_web_search_requires_grounded_sources(tools):
+    from types import SimpleNamespace
+
+    requests = []
+    response = SimpleNamespace(text="Verified stats", candidates=[])
+
+    def generate(**kwargs):
+        requests.append(kwargs)
+        return response
+
+    tools.gemini = SimpleNamespace(models=SimpleNamespace(generate_content=generate))
+    assert "error" in run(tools, "search_web", query="current cricket stats")
+    response.candidates = [SimpleNamespace(grounding_metadata=SimpleNamespace(
+        grounding_chunks=[SimpleNamespace(web=SimpleNamespace(title="Stats", uri="https://example.com/stats"))]
+    ))]
+    result = run(tools, "search_web", query="current cricket stats")
+    assert result["answer"] == "Verified stats"
+    assert result["sources"] == [{"title": "Stats", "url": "https://example.com/stats"}]
+    assert result["retrieved_at"]
+    assert requests[-1]["config"].tools[0].google_search is not None
+
+
+def test_web_search_without_gemini_is_explicit(tools):
+    tools.gemini = None
+    assert "unavailable" in run(tools, "search_web", query="latest stats")["error"]
+
+
 def test_wikipedia(tools):
     result = run(tools, "search_wikipedia", query="Mahakaleshwar")
     assert result["title"] == "Mahakaleshwar Jyotirlinga"

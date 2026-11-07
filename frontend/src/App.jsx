@@ -5,6 +5,7 @@ import Background from './components/Background'
 import BootSequence from './components/BootSequence'
 import ChatLog from './components/ChatLog'
 import CommandBar from './components/CommandBar'
+import MusicPlayer from './components/MusicPlayer'
 import SignInDialog from './components/SignInDialog'
 import AccountBadge from './components/hud/AccountBadge'
 import Diagnostics from './components/hud/Diagnostics'
@@ -128,6 +129,7 @@ export default function App({ skipBoot = false }) {
             </div>
             <div className="conversation">
               <ChatLog messages={messages} />
+              <MusicPlayer status={status} notificationId={messages.filter((message) => message.notice).at(-1)?.id} />
               <CommandBar
                 onSend={sendText}
                 disabled={status === 'thinking'}

@@ -17,6 +17,13 @@ CI (`.github/workflows/ci.yml`) runs the same on every PR.
 - New dependencies: pin versions published at least 7 days ago.
 - Never read, print or commit secrets. Local values live in `backend/.env` (git-ignored); production values in GCP Secret Manager (`groq-api-key`, `gemini-api-key`, `google-client-id`, `session-secret`).
 
+## Music and fresh information
+- Music is opt-in and defaults to the user-approved Shambhu Stuti recording `STq6tE6un6E`. The public build-time `VITE_MUSIC_URL` can override it with a YouTube watch/share/Music URL or Spotify track URL; rebuild after changing it.
+- YouTube playback uses the official IFrame API, loaded only when the music player is opened. Assistant listening/thinking/speaking and three-second in-app notices smoothly duck music to at most 8% and restore the previous volume without pausing or restarting. Wake-word standby alone does not duck. Spotify embeds and OS/other-app notifications do not support this volume control.
+- Music tests mock the YouTube API. Real-device checks are still needed for embedding availability, mobile volume restrictions, and microphone/wake-word behavior while music plays.
+- `search_web` uses Gemini Google Search grounding through the existing Gemini credentials. The configured Gemini model must support Google Search grounding; provider quotas and grounding charges apply. Missing credentials, failed searches, or missing grounding sources must not silently become current-statistics answers.
+- Automated grounding tests use mocked providers; passing tests do not verify live provider availability or the freshness of actual sports statistics.
+
 ## Deployment (GCP project `mahakal-ai-230925`, region asia-south1)
 - UI: Firebase Hosting site `mahakal-ai` (https://mahakal-ai.web.app); `/mahakal/api/**` is rewritten to Cloud Run service `mahakal-api`.
 - Data: Firestore `(default)`; collections `conversations/{guest_<id>|user_<sub>}` and `users/{sub}`.

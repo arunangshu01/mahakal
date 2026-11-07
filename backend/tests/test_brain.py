@@ -59,6 +59,59 @@ def collect(brain, history=None, context=None):
     return list(brain.generate(history or [{"role": "user", "content": "hi"}], context or ToolContext()))
 
 
+def test_current_stats_are_searched_before_answering():
+    groq = FakeGroq([chunk("Verified answer")])
+    brain = make_brain(groq=groq)
+    events = collect(brain, [{"role": "user", "content": "Virat Kohli career stats?"}])
+    assert events[0] == StreamEvent("tool", name="search_web")
+    assert brain.tools.calls[0][0] == "search_web"
+    assert "Live web lookup" in groq.requests[0]["messages"][0]["content"]
+
+
+def test_verified_search_sources_are_included_in_the_saved_reply():
+    brain = make_brain(groq=FakeGroq([chunk("Verified stats")]))
+    brain.tools.run = lambda *args: json.dumps({
+        "answer": "Stats", "sources": [{"title": "Official stats", "url": "https://example.com/stats"}]
+    })
+    conversation = brain.think("guest_stats", "Kohli stats")
+    assert "Sources: [1](<https://example.com/stats>)" in conversation.messages[-1]["content"]
+
+
+def test_failed_search_does_not_fall_back_to_stale_stats():
+    groq = FakeGroq([chunk("Old stats")])
+    brain = make_brain(groq=groq)
+    brain.tools.run = lambda *args: json.dumps({"error": "Unavailable"})
+    events = collect(brain, [{"role": "user", "content": "Latest cricket rankings?"}])
+    assert "couldn't verify" in events[-1].text
+    assert not groq.requests
+
+
+def test_gemini_fallback_receives_the_same_live_evidence(monkeypatch):
+    brain = make_brain(groq=FakeGroq(RuntimeError("down")), gemini=object())
+    prompts = []
+
+    def answer(client, history, context):
+        prompts.append(Brain.system_prompt(context))
+        return "Verified answer"
+
+    monkeypatch.setattr(brain, "_ask_gemini", answer)
+    collect(brain, [{"role": "user", "content": "Current cricket stats"}])
+    assert "Live web lookup" in prompts[0]
+
+
+def test_a_greeting_after_stats_does_not_trigger_another_search():
+    brain = make_brain(groq=FakeGroq([chunk("Hello")]))
+    collect(brain, [{"role": "user", "content": "Kohli stats"}, {"role": "user", "content": "Hello"}])
+    assert not brain.tools.calls
+
+
+def test_system_prompt_has_a_current_date():
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    assert datetime.now(ZoneInfo("Asia/Kolkata")).date().isoformat() in Brain.system_prompt(ToolContext())
+
+
 def test_streams_text_deltas():
     brain = make_brain(groq=FakeGroq([chunk("Hello"), chunk(" there")]))
     assert collect(brain) == [StreamEvent("delta", "Hello"), StreamEvent("delta", " there")]
