@@ -7,29 +7,30 @@
  *   >= 1800px          large / 4K screens: everything scales up
  */
 .app {
-  --panel-width: clamp(230px, 19vw, 300px);
+  --panel-width: clamp(260px, 20vw, 320px);
   position: relative;
   height: 100vh;
   height: 100dvh;
   display: grid;
   grid-template-columns: var(--panel-width) minmax(0, 1fr) var(--panel-width);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   isolation: isolate;
 }
 
 .hud-panels {
   display: contents;
 }
-.panel-left { grid-column: 1; grid-row: 2; }
+.panel-left { grid-column: 1; grid-row: 2 / 4; }
 .panel-right { grid-column: 3; grid-row: 2; }
 .hud-backdrop { display: none; }
 
 .main {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 2 / 4;
   position: relative;
   z-index: 2;
   min-height: 0;
+  container-type: size;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -79,7 +80,11 @@
 /* ---------- Tablets and small laptops: HUD drawer ---------- */
 @media (max-width: 1150px) {
   .app { grid-template-columns: minmax(0, 1fr); }
-  .main { grid-column: 1; }
+  .main { grid-column: 1; grid-row: 2; overflow-y: auto; }
+  .conversation { flex-shrink: 0; min-height: 100px; }
+  .app:has(.music-player[data-expanded='true']) .reactor {
+    --size: min(180px, 22dvh, 45vw, max(48px, calc(100cqh - 150px)));
+  }
 
   .hud-panels {
     position: fixed;

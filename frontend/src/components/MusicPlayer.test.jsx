@@ -18,6 +18,10 @@ beforeEach(() => {
       getVideoData: vi.fn(() => ({ title: 'Initial song title', video_id: 'STq6tE6un6E' })),
       playVideo: vi.fn(),
       pauseVideo: vi.fn(),
+      getPlayerState: vi.fn(() => 2),
+      isMuted: vi.fn(() => false),
+      mute: vi.fn(),
+      unMute: vi.fn(),
       destroy: vi.fn(() => frame.remove()),
       options,
     }
@@ -46,6 +50,48 @@ test('loads the supplied recording on demand without autoplay and stops on close
   await user.click(screen.getByRole('button', { name: 'Close music' }))
   expect(players[0].destroy).toHaveBeenCalledOnce()
   expect(container.querySelector('iframe')).toBeNull()
+})
+
+test('minimizes by pausing, restores the same player, and only unloads on close', async () => {
+  render(<MusicPlayer status="idle" />)
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  const frame = screen.getByTitle('YouTube music player')
+  act(() => players[0].options.events.onStateChange({ target: players[0], data: 1 }))
+  await user.click(screen.getByRole('button', { name: 'Minimize music' }))
+  expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+  expect(players[0].destroy).not.toHaveBeenCalled()
+  expect(frame).not.toBeVisible()
+  expect(screen.queryByRole('slider', { name: 'Music volume' })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Restore music' }))
+  expect(frame).toBeVisible()
+  expect(players[0].playVideo).not.toHaveBeenCalled()
+  expect(window.YT.Player).toHaveBeenCalledOnce()
+  await user.click(screen.getByRole('button', { name: 'Close music' }))
+  expect(players[0].destroy).toHaveBeenCalledOnce()
+})
+
+test('icon controls expose accessible names and control playback and mute', async () => {
+  render(<MusicPlayer status="idle" />)
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  await user.click(screen.getByRole('button', { name: 'Play music' }))
+  expect(players[0].playVideo).toHaveBeenCalledOnce()
+  act(() => players[0].options.events.onStateChange({ target: players[0], data: 1 }))
+  await user.click(screen.getByRole('button', { name: 'Pause music' }))
+  expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+  await user.click(screen.getByRole('button', { name: 'Mute music' }))
+  expect(players[0].mute).toHaveBeenCalledOnce()
+  await user.click(screen.getByRole('button', { name: 'Unmute music' }))
+  expect(players[0].unMute).toHaveBeenCalledOnce()
+  expect(screen.getByRole('button', { name: 'Minimize music' }).textContent).toBe('')
+  expect(screen.getByRole('button', { name: 'Close music' }).textContent).toBe('')
+})
+
+test('a delayed playback event cannot start a hidden minimized player', async () => {
+  render(<MusicPlayer status="idle" />)
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  await user.click(screen.getByRole('button', { name: 'Minimize music' }))
+  act(() => players[0].options.events.onStateChange({ target: players[0], data: 1 }))
+  expect(players[0].pauseVideo).toHaveBeenCalledTimes(2)
 })
 
 test('shows the current video title and updates it when a recommendation plays', async () => {
