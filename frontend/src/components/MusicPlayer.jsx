@@ -71,7 +71,6 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   const [minimized, setMinimized] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
-  const minimizedRef = useRef(false)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState('')
   const [track, setTrack] = useState(null)
@@ -131,8 +130,7 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
           onReady: ({ target }) => {
             if (cancelled) return
             playerRef.current = target
-            if (minimizedRef.current) target.pauseVideo()
-            setPlaying(!minimizedRef.current && target.getPlayerState?.() === 1)
+            setPlaying(target.getPlayerState?.() === 1)
             setMuted(target.isMuted?.() ?? false)
             syncTrack(target)
             metadataTimer = setInterval(() => syncTrack(target), 1000)
@@ -144,11 +142,6 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
           onStateChange: ({ target, data }) => {
             if (cancelled) return
             syncTrack(target)
-            if (minimizedRef.current && (data === 1 || data === 3)) {
-              target.pauseVideo()
-              setPlaying(false)
-              return
-            }
             setPlaying(data === 1 || data === 3)
             setMuted(target.isMuted?.() ?? false)
             if (data === 1 || data === 5) setError('')
@@ -191,18 +184,11 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   }, [ducked, open, ready, volume])
 
   const expand = () => {
-    minimizedRef.current = false
     setMinimized(false)
     setOpen(true)
   }
-  const minimize = () => {
-    minimizedRef.current = true
-    playerRef.current?.pauseVideo()
-    setPlaying(false)
-    setMinimized(true)
-  }
+  const minimize = () => setMinimized(true)
   const close = () => {
-    minimizedRef.current = false
     setMinimized(false)
     setPlaying(false)
     setReady(false)
@@ -224,21 +210,21 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   }
 
   return (
-    <section className="music-player" aria-label="Music" data-expanded={open && !minimized}>
+    <section className="music-player" aria-label="Music" data-expanded={open} data-compact={open && minimized}>
       <div className="music-heading">
         <span className="music-title" aria-live="polite" title={currentTrack?.title || 'Music'}>{currentTrack?.title || 'Music'}</span>
         <div className="music-actions">
-          {!open || minimized ? (
-            <button type="button" aria-label={open ? 'Restore music' : 'Listen to music'} title={open ? 'Restore music (paused)' : 'Listen to music'} aria-expanded={false} aria-controls="music-content" onClick={expand}>
-              <MusicIcon name={open ? 'restore' : 'play'} />
+          {!open ? (
+            <button type="button" aria-label="Listen to music" title="Listen to music" aria-expanded={false} aria-controls="music-content" onClick={expand}>
+              <MusicIcon name="play" />
             </button>
           ) : youtube && (
             <>
               <button type="button" aria-label={playing ? 'Pause music' : 'Play music'} title={playing ? 'Pause music' : 'Play music'} disabled={!ready || Boolean(error)} onClick={togglePlayback}>
                 <MusicIcon name={playing ? 'pause' : 'play'} />
               </button>
-              <button type="button" aria-label="Minimize music" title="Minimize music (pauses playback)" aria-expanded={true} aria-controls="music-content" onClick={minimize}>
-                <MusicIcon name="minimize" />
+              <button type="button" aria-label={minimized ? 'Restore music' : 'Minimize music'} title={minimized ? 'Restore full player' : 'Compact player (keeps playing)'} aria-pressed={minimized} aria-controls="music-content" onClick={minimized ? expand : minimize}>
+                <MusicIcon name={minimized ? 'restore' : 'minimize'} />
               </button>
             </>
           )}
@@ -250,12 +236,12 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
         </div>
       </div>
       {open && (
-        <div id="music-content" hidden={minimized}>
+        <div id="music-content">
           {!src ? (
             <p>The official song link is not configured yet.</p>
           ) : (
             <>
-              {youtube && ducked && playing && <p className="music-ducked">Volume lowered for the assistant</p>}
+              {youtube && !minimized && ducked && playing && <p className="music-ducked">Volume lowered for the assistant</p>}
               {youtube ? (
                 <>
                   <div className="music-video" ref={containerRef} />

@@ -52,18 +52,20 @@ test('loads the supplied recording on demand without autoplay and stops on close
   expect(container.querySelector('iframe')).toBeNull()
 })
 
-test('minimizes by pausing, restores the same player, and only unloads on close', async () => {
-  render(<MusicPlayer status="idle" />)
+test('compact mode keeps the same video visible and playing; only close unloads it', async () => {
+  const { container } = render(<MusicPlayer status="idle" />)
   await user.click(screen.getByRole('button', { name: 'Listen to music' }))
   const frame = screen.getByTitle('YouTube music player')
   act(() => players[0].options.events.onStateChange({ target: players[0], data: 1 }))
   await user.click(screen.getByRole('button', { name: 'Minimize music' }))
-  expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+  expect(players[0].pauseVideo).not.toHaveBeenCalled()
   expect(players[0].destroy).not.toHaveBeenCalled()
-  expect(frame).not.toBeVisible()
-  expect(screen.queryByRole('slider', { name: 'Music volume' })).toBeNull()
-  await user.click(screen.getByRole('button', { name: 'Restore music' }))
   expect(frame).toBeVisible()
+  expect(container.querySelector('.music-player')).toHaveAttribute('data-compact', 'true')
+  expect(screen.getByRole('slider', { name: 'Music volume' })).toBeVisible()
+  expect(screen.getByRole('button', { name: 'Pause music' })).toBeVisible()
+  await user.click(screen.getByRole('button', { name: 'Restore music' }))
+  expect(screen.getByTitle('YouTube music player')).toBe(frame)
   expect(players[0].playVideo).not.toHaveBeenCalled()
   expect(window.YT.Player).toHaveBeenCalledOnce()
   await user.click(screen.getByRole('button', { name: 'Close music' }))
@@ -86,12 +88,22 @@ test('icon controls expose accessible names and control playback and mute', asyn
   expect(screen.getByRole('button', { name: 'Close music' }).textContent).toBe('')
 })
 
-test('a delayed playback event cannot start a hidden minimized player', async () => {
-  render(<MusicPlayer status="idle" />)
+test('compact playback still ducks for the assistant and never resumes a user-paused song', async () => {
+  const { rerender } = render(<MusicPlayer status="idle" />)
   await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  fade()
   await user.click(screen.getByRole('button', { name: 'Minimize music' }))
   act(() => players[0].options.events.onStateChange({ target: players[0], data: 1 }))
-  expect(players[0].pauseVideo).toHaveBeenCalledTimes(2)
+  rerender(<MusicPlayer status="speaking" />)
+  fade()
+  expect(players[0].getVolume()).toBe(8)
+  expect(players[0].pauseVideo).not.toHaveBeenCalled()
+  await user.click(screen.getByRole('button', { name: 'Pause music' }))
+  act(() => players[0].options.events.onStateChange({ target: players[0], data: 2 }))
+  rerender(<MusicPlayer status="idle" />)
+  fade()
+  expect(players[0].getVolume()).toBe(55)
+  expect(players[0].playVideo).not.toHaveBeenCalled()
 })
 
 test('shows the current video title and updates it when a recommendation plays', async () => {
