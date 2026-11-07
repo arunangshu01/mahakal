@@ -52,8 +52,26 @@ function musicEmbedUrl(value) {
   }
 }
 
+function MusicIcon({ name }) {
+  const paths = {
+    play: 'm8 5 11 7-11 7Z',
+    pause: 'M8 5v14M16 5v14',
+    minimize: 'M5 18h14',
+    restore: 'M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5',
+    close: 'm6 6 12 12M6 18 18 6',
+    volume: 'M11 5 6 9H3v6h3l5 4ZM15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14',
+    muted: 'M11 5 6 9H3v6h3l5 4ZM16 9l6 6M16 15l6-6',
+    external: 'M14 3h7v7m0-7L10 14M10 3H3v18h18v-7',
+  }
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={paths[name]} /></svg>
+}
+
 export default function MusicPlayer({ status, notificationId, songUrl = import.meta.env.VITE_MUSIC_URL || DEFAULT_SONG_URL }) {
   const [open, setOpen] = useState(false)
+  const [minimized, setMinimized] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const minimizedRef = useRef(false)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState('')
   const [track, setTrack] = useState(null)
@@ -113,6 +131,9 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
           onReady: ({ target }) => {
             if (cancelled) return
             playerRef.current = target
+            if (minimizedRef.current) target.pauseVideo()
+            setPlaying(!minimizedRef.current && target.getPlayerState?.() === 1)
+            setMuted(target.isMuted?.() ?? false)
             syncTrack(target)
             metadataTimer = setInterval(() => syncTrack(target), 1000)
             target.setVolume(duckedRef.current ? Math.min(baselineRef.current, 8) : baselineRef.current)
@@ -123,6 +144,13 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
           onStateChange: ({ target, data }) => {
             if (cancelled) return
             syncTrack(target)
+            if (minimizedRef.current && (data === 1 || data === 3)) {
+              target.pauseVideo()
+              setPlaying(false)
+              return
+            }
+            setPlaying(data === 1 || data === 3)
+            setMuted(target.isMuted?.() ?? false)
             if (data === 1 || data === 5) setError('')
           },
           onError: () => {
@@ -162,33 +190,86 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
     return () => clearInterval(timer)
   }, [ducked, open, ready, volume])
 
+  const expand = () => {
+    minimizedRef.current = false
+    setMinimized(false)
+    setOpen(true)
+  }
+  const minimize = () => {
+    minimizedRef.current = true
+    playerRef.current?.pauseVideo()
+    setPlaying(false)
+    setMinimized(true)
+  }
+  const close = () => {
+    minimizedRef.current = false
+    setMinimized(false)
+    setPlaying(false)
+    setReady(false)
+    setTrack(null)
+    setOpen(false)
+  }
+  const togglePlayback = () => {
+    const player = playerRef.current
+    if (!player) return
+    if (playing) player.pauseVideo()
+    else player.playVideo()
+  }
+  const toggleMute = () => {
+    const player = playerRef.current
+    if (!player) return
+    if (muted) player.unMute()
+    else player.mute()
+    setMuted(!muted)
+  }
+
   return (
-    <section className="music-player" aria-label="Music">
+    <section className="music-player" aria-label="Music" data-expanded={open && !minimized}>
       <div className="music-heading">
-        <span className="music-title" aria-live="polite">{currentTrack?.title || 'Music'}</span>
-        <button type="button" aria-expanded={open} aria-controls="music-content" onClick={() => setOpen(!open)}>
-          {open ? 'Close music' : 'Listen to music'}
-        </button>
+        <span className="music-title" aria-live="polite" title={currentTrack?.title || 'Music'}>{currentTrack?.title || 'Music'}</span>
+        <div className="music-actions">
+          {!open || minimized ? (
+            <button type="button" aria-label={open ? 'Restore music' : 'Listen to music'} title={open ? 'Restore music (paused)' : 'Listen to music'} aria-expanded={false} aria-controls="music-content" onClick={expand}>
+              <MusicIcon name={open ? 'restore' : 'play'} />
+            </button>
+          ) : youtube && (
+            <>
+              <button type="button" aria-label={playing ? 'Pause music' : 'Play music'} title={playing ? 'Pause music' : 'Play music'} disabled={!ready || Boolean(error)} onClick={togglePlayback}>
+                <MusicIcon name={playing ? 'pause' : 'play'} />
+              </button>
+              <button type="button" aria-label="Minimize music" title="Minimize music (pauses playback)" aria-expanded={true} aria-controls="music-content" onClick={minimize}>
+                <MusicIcon name="minimize" />
+              </button>
+            </>
+          )}
+          {open && (
+            <button type="button" aria-label="Close music" title="Close music" onClick={close}>
+              <MusicIcon name="close" />
+            </button>
+          )}
+        </div>
       </div>
       {open && (
-        <div id="music-content">
+        <div id="music-content" hidden={minimized}>
           {!src ? (
             <p>The official song link is not configured yet.</p>
           ) : (
             <>
-              <p>{youtube && ducked ? 'Music continues quietly while the assistant is active.' : 'Press play to listen. Closing this player stops the music.'}</p>
+              {youtube && ducked && playing && <p className="music-ducked">Volume lowered for the assistant</p>}
               {youtube ? (
                 <>
-                  <div ref={containerRef} />
+                  <div className="music-video" ref={containerRef} />
                   {error ? <p role="alert">{error}</p> : !ready && <p>Loading music player…</p>}
-                  <label className="music-volume">
-                    Music volume
-                    <input type="range" min="0" max="100" value={volume} disabled={!ready} onChange={(event) => {
+                  <div className="music-volume">
+                    <button type="button" aria-label={muted ? 'Unmute music' : 'Mute music'} title={muted ? 'Unmute music' : 'Mute music'} aria-pressed={muted} disabled={!ready} onClick={toggleMute}>
+                      <MusicIcon name={muted || volume === 0 ? 'muted' : 'volume'} />
+                    </button>
+                    <input aria-label="Music volume" title={`Music volume: ${volume}%`} type="range" min="0" max="100" value={volume} disabled={!ready} onChange={(event) => {
                       const next = Number(event.target.value)
                       baselineRef.current = next
                       setVolume(next)
                     }} />
-                  </label>
+                  </div>
                 </>
               ) : (
                 <>
@@ -196,7 +277,9 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
                   <p>Automatic volume ducking is available with the YouTube player only.</p>
                 </>
               )}
-              <a href={currentSongUrl} target="_blank" rel="noopener noreferrer">Open on streaming service</a>
+              <a className="music-external" href={currentSongUrl} target="_blank" rel="noopener noreferrer" aria-label="Open on streaming service" title="Open on streaming service">
+                <MusicIcon name="external" />
+              </a>
             </>
           )}
         </div>
