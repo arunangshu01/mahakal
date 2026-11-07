@@ -56,6 +56,7 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   const [open, setOpen] = useState(false)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState('')
+  const [track, setTrack] = useState(null)
   const [volume, setVolume] = useState(55)
   const [dismissedNotification, setDismissedNotification] = useState(null)
   const notificationActive = notificationId != null && notificationId !== dismissedNotification
@@ -66,6 +67,8 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   const restoredRef = useRef(true)
   const src = musicEmbedUrl(songUrl)
   const youtube = Boolean(src?.includes('youtube-nocookie.com'))
+  const currentTrack = open && track?.source === src ? track : null
+  const currentSongUrl = currentTrack?.videoId ? `https://www.youtube.com/watch?v=${currentTrack.videoId}` : songUrl
   const ducked = status !== 'idle' || notificationActive
   const duckedRef = useRef(ducked)
 
@@ -83,13 +86,23 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
     if (!open || !youtube) return
     let cancelled = false
     let player
+    let metadataTimer
+    const syncTrack = (target) => {
+      if (cancelled) return
+      const data = target.getVideoData?.()
+      const title = typeof data?.title === 'string' ? data.title.trim() : ''
+      const videoId = /^[\w-]{11}$/.test(data?.video_id ?? '') ? data.video_id : null
+      setTrack((previous) => previous?.source === src && previous.title === title && previous.videoId === videoId
+        ? previous : { source: src, title, videoId })
+    }
     const container = containerRef.current
     loadYouTube().then((YT) => {
       if (cancelled) return
       setReady(false)
       setError('')
+      setTrack(null)
       const frame = document.createElement('iframe')
-      frame.title = 'Shambhu Stuti by Ketan Kumar'
+      frame.title = 'YouTube music player'
       frame.src = `${src}&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`
       frame.allow = 'encrypted-media; fullscreen; picture-in-picture'
       frame.referrerPolicy = 'strict-origin-when-cross-origin'
@@ -100,10 +113,17 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
           onReady: ({ target }) => {
             if (cancelled) return
             playerRef.current = target
+            syncTrack(target)
+            metadataTimer = setInterval(() => syncTrack(target), 1000)
             target.setVolume(duckedRef.current ? Math.min(baselineRef.current, 8) : baselineRef.current)
             wasDuckedRef.current = duckedRef.current
             restoredRef.current = !duckedRef.current
             setReady(true)
+          },
+          onStateChange: ({ target, data }) => {
+            if (cancelled) return
+            syncTrack(target)
+            if (data === 1 || data === 5) setError('')
           },
           onError: () => {
             if (!cancelled) setError('This recording cannot play here. Try the streaming service link below.')
@@ -115,6 +135,7 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
     })
     return () => {
       cancelled = true
+      clearInterval(metadataTimer)
       playerRef.current = null
       player?.destroy()
       container.replaceChildren()
@@ -144,7 +165,7 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   return (
     <section className="music-player" aria-label="Music">
       <div className="music-heading">
-        <span>Shambhu Stuti · Ketan Kumar</span>
+        <span className="music-title" aria-live="polite">{currentTrack?.title || 'Music'}</span>
         <button type="button" aria-expanded={open} aria-controls="music-content" onClick={() => setOpen(!open)}>
           {open ? 'Close music' : 'Listen to music'}
         </button>
@@ -171,11 +192,11 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
                 </>
               ) : (
                 <>
-                  <iframe title="Shambhu Stuti by Ketan Kumar" src={src} allow="encrypted-media; fullscreen; picture-in-picture" />
+                  <iframe title="Streaming music player" src={src} allow="encrypted-media; fullscreen; picture-in-picture" />
                   <p>Automatic volume ducking is available with the YouTube player only.</p>
                 </>
               )}
-              <a href={songUrl} target="_blank" rel="noopener noreferrer">Open on streaming service</a>
+              <a href={currentSongUrl} target="_blank" rel="noopener noreferrer">Open on streaming service</a>
             </>
           )}
         </div>

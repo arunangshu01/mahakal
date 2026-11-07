@@ -129,7 +129,6 @@ export default function App({ skipBoot = false }) {
             </div>
             <div className="conversation">
               <ChatLog messages={messages} />
-              <MusicPlayer status={status} notificationId={messages.filter((message) => message.notice).at(-1)?.id} />
               <CommandBar
                 onSend={sendText}
                 disabled={status === 'thinking'}
@@ -139,6 +138,8 @@ export default function App({ skipBoot = false }) {
               />
             </div>
           </main>
+
+          <MusicPlayer status={status} notificationId={messages.filter((message) => message.notice).at(-1)?.id} />
 
           {signInReason && (
             <SignInDialog

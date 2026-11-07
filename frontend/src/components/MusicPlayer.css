@@ -1,6 +1,14 @@
 .music-player {
-  flex-shrink: 0;
-  margin: 6px 0;
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 10;
+  width: max(224px, calc(var(--panel-width, 300px) - 24px));
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: rgba(2, 6, 13, 0.96);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(var(--accent-rgb), 0.25);
   padding: 8px 10px;
   color: var(--accent);
@@ -12,6 +20,10 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
+}
+.music-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .music-player button {
   background: transparent;
@@ -35,3 +47,11 @@
 .music-volume input { flex: 1; min-width: 0; }
 .music-player a { color: inherit; }
 .music-player p { margin: 8px 0; }
+
+@media (max-width: 1150px) {
+  .music-player {
+    width: min(360px, calc(100vw - 24px));
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 160px);
+  }
+}
