@@ -43,8 +43,6 @@
   align-items: center;
   flex-shrink: 0;
 }
-.app[data-chat-active='true'] { --chat-reactor-size: 120px; }
-.app[data-chat-active='true'] .reactor { --size: min(220px, 24dvh, 50vw); }
 .conversation {
   width: min(760px, 100%);
   flex: 1;
@@ -85,7 +83,7 @@
   .main { grid-column: 1; grid-row: 2; overflow-y: auto; }
   .conversation { flex-shrink: 0; min-height: 72px; }
   .app:has(.music-player[data-expanded='true']) .reactor {
-    --size: min(var(--chat-reactor-size, 180px), 22dvh, 45vw, max(48px, calc(100cqh - 150px)));
+    --size: min(180px, 22dvh, 45vw, max(48px, calc(100cqh - 150px)));
   }
 
   .hud-panels {
