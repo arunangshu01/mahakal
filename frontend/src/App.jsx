@@ -90,7 +90,7 @@ export default function App({ skipBoot = false }) {
   )
 
   return (
-    <div className="app" data-status={status} data-chat-active={messages.some((message) => !message.notice)}>
+    <div className="app" data-status={status}>
       <Background />
       <div className="corners" aria-hidden="true">
         <i />
