@@ -87,3 +87,7 @@
   .music-player button,
   .music-external { width: 44px; height: 44px; }
 }
+
+@media (pointer: coarse) {
+  .music-volume input { height: 28px; }
+}

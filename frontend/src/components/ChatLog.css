@@ -159,7 +159,11 @@
   .log { padding-top: 10px; gap: 10px; }
   .msg-body { font-size: 14px; line-height: 1.7; }
   .msg { max-width: 90%; padding: 8px 12px 10px; }
-  .chat-copy { width: 44px; height: 44px; }
+}
+/* 44px touch targets */
+@media (pointer: coarse) {
+  .chat-copy,
+  .jump-latest { width: 44px; height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .thinking-dot,
