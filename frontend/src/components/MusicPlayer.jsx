@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import './MusicPlayer.css'
 
 const DEFAULT_SONG_URL = 'https://music.youtube.com/watch?v=STq6tE6un6E'
+
+// Additional user-approved YouTube tracks. Add official watch/share/Music URLs here.
+const EXTRA_SONGS = []
 let youtubeApiPromise
 
 function loadYouTube() {
@@ -48,9 +51,9 @@ function youtubeVideoId(value) {
   }
 }
 
-// Approved tracks: the configured song plus any extras in VITE_MUSIC_URLS (comma-separated).
+// Approved tracks: EXTRA_SONGS plus any extras in VITE_MUSIC_URLS (comma-separated).
 function buildPlaylist(songUrl) {
-  const extra = (import.meta.env.VITE_MUSIC_URLS || '').split(',').map((u) => u.trim()).filter(Boolean)
+  const extra = [...EXTRA_SONGS, ...(import.meta.env.VITE_MUSIC_URLS || '').split(',').map((u) => u.trim()).filter(Boolean)]
   const seen = new Set()
   const youtube = [songUrl, ...extra].filter((u) => {
     const id = youtubeVideoId(u)
