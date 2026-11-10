@@ -5,6 +5,7 @@ import Background from './components/Background'
 import BootSequence from './components/BootSequence'
 import ChatLog from './components/ChatLog'
 import CommandBar from './components/CommandBar'
+import CreatorMark from './components/CreatorMark'
 import MusicPlayer from './components/MusicPlayer'
 import SignInDialog from './components/SignInDialog'
 import AccountBadge from './components/hud/AccountBadge'
@@ -140,6 +141,7 @@ export default function App({ skipBoot = false }) {
           </main>
 
           <MusicPlayer status={status} notificationId={messages.filter((message) => message.notice).at(-1)?.id} />
+          <CreatorMark />
 
           {signInReason && (
             <SignInDialog

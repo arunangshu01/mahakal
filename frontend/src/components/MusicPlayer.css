@@ -4,7 +4,8 @@
   position: relative;
   z-index: 2;
   min-width: 0;
-  margin: 0 12px max(16px, env(safe-area-inset-bottom));
+  margin: 0 calc(env(safe-area-inset-right) + 18px) calc(env(safe-area-inset-bottom) + 18px)
+    calc(env(safe-area-inset-left) + 18px);
   max-height: min(440px, calc(100dvh - 180px));
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -77,11 +78,11 @@
 @media (max-width: 1150px) {
   .music-player {
     grid-column: 1;
-    width: min(400px, calc(100% - 24px));
+    width: min(400px, calc(100% - 36px));
     justify-self: end;
     max-height: min(360px, 45dvh);
-    margin-right: max(12px, env(safe-area-inset-right));
-    margin-bottom: max(8px, env(safe-area-inset-bottom));
+    margin-right: calc(env(safe-area-inset-right) + 18px);
+    margin-bottom: calc(env(safe-area-inset-bottom) + 18px);
   }
   .music-player button,
   .music-external { width: 44px; height: 44px; }

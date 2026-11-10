@@ -1,0 +1,67 @@
+.creator-mark {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
+  z-index: 1;
+  min-width: 0;
+  margin: 0 calc(env(safe-area-inset-right) + 18px) calc(env(safe-area-inset-bottom) + 18px)
+    calc(env(safe-area-inset-left) + 18px);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(2, 6, 13, 0.96);
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  font: 10px/1.6 var(--mono);
+  letter-spacing: 0.5px;
+  color: rgba(var(--accent-rgb), 0.55);
+}
+.creator-mark strong {
+  color: rgba(var(--accent-rgb), 0.85);
+  font-weight: 400;
+}
+.creator-mark nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.creator-mark a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(var(--accent-rgb), 0.04);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  color: rgba(var(--accent-rgb), 0.5);
+  text-decoration: none;
+}
+.creator-mark a:hover { color: var(--accent); background: rgba(var(--accent-rgb), 0.15); }
+.creator-mark a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.creator-mark svg { width: 14px; height: 14px; }
+
+/* ---------- Tablets and small laptops: footer gets its own row ---------- */
+@media (max-width: 1150px) {
+  .creator-mark {
+    grid-row: 4;
+    justify-self: stretch;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 calc(env(safe-area-inset-right) + 18px) calc(env(safe-area-inset-bottom) + 18px)
+      calc(env(safe-area-inset-left) + 18px);
+  }
+  .creator-mark a { width: 32px; height: 32px; }
+  .creator-mark svg { width: 16px; height: 16px; }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+  .creator-mark { padding: 8px 10px; font-size: 9px; }
+}
+
+/* ---------- Phones in landscape: no room for a footer ---------- */
+@media (orientation: landscape) and (max-height: 560px) {
+  .creator-mark { display: none; }
+}
