@@ -28,6 +28,7 @@ CI (`.github/workflows/ci.yml`) runs the same on every PR.
 - Music tests mock the YouTube API. Real-device checks are still needed for embedding availability, mobile volume restrictions, and microphone/wake-word behavior while music plays.
 - `search_web` uses Gemini Google Search grounding through the existing Gemini credentials. The configured Gemini model must support Google Search grounding; provider quotas and grounding charges apply. Missing credentials, failed searches, or missing grounding sources must not silently become current-statistics answers.
 - Automated grounding tests use mocked providers; passing tests do not verify live provider availability or the freshness of actual sports statistics.
+- `CreatorMark` is the creator attribution card ("Created by Arunangshu Pramanik", GitHub/email icon links). It sits bottom-left beside the music dock on desktop, becomes a full-width footer row below the dock on ≤1150px, and hides in short landscape. Both bottom cards share the side panels' 18px margins and full column widths.
 
 ## Deployment (GCP project `mahakal-ai-230925`, region asia-south1)
 - UI: Firebase Hosting site `mahakal-ai` (https://mahakal-ai.web.app); `/mahakal/api/**` is rewritten to Cloud Run service `mahakal-api`.
