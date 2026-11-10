@@ -4,7 +4,13 @@ import './MusicPlayer.css'
 const DEFAULT_SONG_URL = 'https://music.youtube.com/watch?v=STq6tE6un6E'
 
 // Additional user-approved YouTube tracks. Add official watch/share/Music URLs here.
-const EXTRA_SONGS = []
+const EXTRA_SONGS = [
+  'https://music.youtube.com/watch?v=081bLdQKX-Q',
+  'https://music.youtube.com/watch?v=xqKUctzztB4',
+  'https://music.youtube.com/watch?v=YSCiLNM3zSs',
+  'https://music.youtube.com/watch?v=3rJ4HVA9cII',
+  'https://music.youtube.com/watch?v=evTvChlKhwU',
+]
 let youtubeApiPromise
 
 function loadYouTube() {

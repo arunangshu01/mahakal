@@ -276,8 +276,10 @@ test('cycles an approved playlist with next/previous without reloading the playe
   expect(players).toHaveLength(1)
 })
 
-test('hides playlist controls for a single-track list', async () => {
+test('shows playlist controls for the approved tracks', async () => {
   render(<MusicPlayer status="idle" />)
   await user.click(screen.getByRole('button', { name: 'Listen to music' }))
-  expect(screen.queryByRole('button', { name: 'Next track' })).toBeNull()
+  expect(screen.getByLabelText('Track 1 of 6')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Next track' }))
+  expect(players[0].loadVideoById).toHaveBeenCalledWith('081bLdQKX-Q')
 })
