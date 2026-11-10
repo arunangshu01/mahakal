@@ -57,8 +57,11 @@ function youtubeVideoId(value) {
   }
 }
 
-// Approved tracks: EXTRA_SONGS plus any extras in VITE_MUSIC_URLS (comma-separated).
+// Approved tracks apply only to the default song. A custom songUrl stays a single track.
 function buildPlaylist(songUrl) {
+  if (songUrl !== DEFAULT_SONG_URL) {
+    return { urls: [songUrl], youtube: Boolean(youtubeVideoId(songUrl)) }
+  }
   const extra = [...EXTRA_SONGS, ...(import.meta.env.VITE_MUSIC_URLS || '').split(',').map((u) => u.trim()).filter(Boolean)]
   const seen = new Set()
   const youtube = [songUrl, ...extra].filter((u) => {
