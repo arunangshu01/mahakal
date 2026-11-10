@@ -118,3 +118,30 @@ test('Typewriter reveals the text over time', () => {
   expect(container).toHaveTextContent('Om Namah Shivaya')
   expect(container.querySelector('.caret')).toBeNull()
 })
+
+test('downloads a markdown transcript of the conversation', async () => {
+  const createObjectURL = vi.fn(() => 'blob:transcript')
+  const revokeObjectURL = vi.fn()
+  vi.stubGlobal('URL', Object.assign(Object.create(URL), { createObjectURL, revokeObjectURL }))
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  render(
+    <ChatLog
+      messages={[
+        { id: 1, from: 'user', text: 'Hi there' },
+        { id: 2, from: 'ai', text: 'Namaste' },
+        { id: 3, from: 'ai', text: 'A notice', notice: true },
+      ]}
+    />,
+  )
+  const button = screen.getByRole('button', { name: 'Download transcript' })
+  fireEvent.click(button)
+  expect(click).toHaveBeenCalled()
+  const blob = createObjectURL.mock.calls[0][0]
+  const text = await blob.text()
+  expect(text).toContain('## You')
+  expect(text).toContain('Hi there')
+  expect(text).toContain('## M.A.H.A.K.A.L.')
+  expect(text).toContain('Namaste')
+  expect(text).not.toContain('A notice')
+  click.mockRestore()
+})

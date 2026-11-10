@@ -61,6 +61,11 @@
   .creator-mark { padding: 8px 10px; font-size: 9px; }
 }
 
+/* 44px touch targets */
+@media (pointer: coarse) {
+  .creator-mark a { width: 44px; height: 44px; }
+}
+
 /* ---------- Phones in landscape: no room for a footer ---------- */
 @media (orientation: landscape) and (max-height: 560px) {
   .creator-mark { display: none; }

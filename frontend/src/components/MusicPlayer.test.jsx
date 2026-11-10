@@ -22,6 +22,8 @@ beforeEach(() => {
       isMuted: vi.fn(() => false),
       mute: vi.fn(),
       unMute: vi.fn(),
+      cueVideoById: vi.fn(),
+      loadVideoById: vi.fn(),
       destroy: vi.fn(() => frame.remove()),
       options,
     }
@@ -34,6 +36,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
 })
 
 const fade = () => act(() => vi.advanceTimersByTime(400))
@@ -256,4 +259,27 @@ test.each([
   const frame = container.querySelector('iframe')
   if (expected) expect(frame.src).toContain(expected)
   else expect(frame).toBeNull()
+})
+
+test('cycles an approved playlist with next/previous without reloading the player', async () => {
+  vi.stubEnv('VITE_MUSIC_URLS', 'https://youtu.be/aaaaaaaaaaa, https://www.youtube.com/watch?v=bbbbbbbbbbb')
+  render(<MusicPlayer status="idle" />)
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  expect(screen.getByLabelText('Track 1 of 8')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Next track' }))
+  expect(players[0].loadVideoById).toHaveBeenCalledWith('081bLdQKX-Q')
+  expect(screen.getByLabelText('Track 2 of 8')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Previous track' }))
+  await user.click(screen.getByRole('button', { name: 'Previous track' }))
+  expect(players[0].loadVideoById).toHaveBeenLastCalledWith('bbbbbbbbbbb')
+  expect(screen.getByLabelText('Track 8 of 8')).toBeInTheDocument()
+  expect(players).toHaveLength(1)
+})
+
+test('shows playlist controls for the approved tracks', async () => {
+  render(<MusicPlayer status="idle" />)
+  await user.click(screen.getByRole('button', { name: 'Listen to music' }))
+  expect(screen.getByLabelText('Track 1 of 6')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Next track' }))
+  expect(players[0].loadVideoById).toHaveBeenCalledWith('081bLdQKX-Q')
 })

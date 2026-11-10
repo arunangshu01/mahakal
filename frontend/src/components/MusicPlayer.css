@@ -30,7 +30,8 @@
   -webkit-box-orient: vertical;
   overflow-wrap: anywhere;
 }
-.music-actions { display: flex; flex-shrink: 0; gap: 2px; }
+.music-actions { display: flex; flex-shrink: 0; align-items: center; gap: 2px; }
+.music-count { padding: 0 4px; font: 10px var(--mono); color: rgba(var(--accent-rgb), 0.6); }
 .music-player button,
 .music-external {
   display: inline-flex;
@@ -86,4 +87,8 @@
   }
   .music-player button,
   .music-external { width: 44px; height: 44px; }
+}
+
+@media (pointer: coarse) {
+  .music-volume input { height: 28px; }
 }

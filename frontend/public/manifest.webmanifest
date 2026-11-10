@@ -1,0 +1,17 @@
+{
+  "name": "M.A.H.A.K.A.L. — Modular Agentic Hub for Automation, Knowledge & Adaptive Logic",
+  "short_name": "M.A.H.A.K.A.L.",
+  "description": "A personal voice AI assistant.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#02060d",
+  "theme_color": "#02060d",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

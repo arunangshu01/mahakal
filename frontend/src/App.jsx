@@ -40,6 +40,15 @@ const saveWakePreference = (enabled) => {
 const WAKE_WORD_NOTICE =
   'Wake word on. Say "Hey Mahakal" to start talking. Your browser listens through its own speech service while this is on.'
 
+const FX_KEY = 'mahakal.fx'
+const loadFxPreference = () => {
+  try {
+    return window.localStorage.getItem(FX_KEY) !== 'off'
+  } catch {
+    return true
+  }
+}
+
 export default function App({ skipBoot = false }) {
   const [booted, setBooted] = useState(skipBoot)
   const [hudOpen, setHudOpen] = useState(false)
@@ -47,6 +56,7 @@ export default function App({ skipBoot = false }) {
   const [signInReason, setSignInReason] = useState(null)
   const [accountOpen, setAccountOpen] = useState(false)
   const [wakeEnabled, setWakeEnabled] = useState(loadWakePreference)
+  const [fxOn, setFxOn] = useState(loadFxPreference)
 
   const auth = useAuth()
   const providers = useHealth()
@@ -65,12 +75,41 @@ export default function App({ skipBoot = false }) {
     }, [notify]),
   })
 
+  const toggleFx = () => {
+    const next = !fxOn
+    setFxOn(next)
+    try {
+      window.localStorage.setItem(FX_KEY, next ? 'on' : 'off')
+    } catch {
+      // Not remembered; fine.
+    }
+  }
+
   const toggleWakeWord = () => {
     const next = !wakeEnabled
     setWakeEnabled(next)
     saveWakePreference(next)
     if (next) notify(WAKE_WORD_NOTICE)
   }
+
+  // Ctrl/Cmd+K or "/" focuses the command bar ("/" only when not already typing).
+  useEffect(() => {
+    const onKey = (e) => {
+      const input = document.getElementById('command-input')
+      if (!input) return
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        input.focus()
+      } else if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag = e.target?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return
+        e.preventDefault()
+        input.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Show the visitor's recent conversation when they arrive, sign in or sign out.
   const visitor = auth.loading ? null : (auth.user?.id ?? 'guest')
@@ -91,7 +130,7 @@ export default function App({ skipBoot = false }) {
   )
 
   return (
-    <div className="app" data-status={status}>
+    <div className="app" data-status={status} data-fx={fxOn ? 'on' : 'off'}>
       <Background />
       <div className="corners" aria-hidden="true">
         <i />
@@ -104,7 +143,7 @@ export default function App({ skipBoot = false }) {
         <BootSequence onDone={() => setBooted(true)} />
       ) : (
         <>
-          <TopBar status={status} hudOpen={hudOpen} onToggleHud={() => setHudOpen((open) => !open)}>
+          <TopBar status={status} hudOpen={hudOpen} fxOn={fxOn} onToggleFx={toggleFx} onToggleHud={() => setHudOpen((open) => !open)}>
             <AccountBadge
               user={auth.user}
               guest={auth.guest}

@@ -29,8 +29,10 @@ export default function CommandBar({ onSend, disabled, wakeWord }) {
         </span>
       )}
       <input
+        id="command-input"
         value={text}
         onChange={(e) => setText(e.target.value)}
+        title="Type a command — press Ctrl/Cmd+K or / to focus"
         placeholder={wakeWord?.enabled ? 'Say "Hey Mahakal" or type…' : 'Issue a command…'}
         aria-label="Message"
         enterKeyHint="send"

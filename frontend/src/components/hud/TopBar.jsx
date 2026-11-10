@@ -5,7 +5,7 @@ import './hud.css'
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 const pad = (n) => String(n).padStart(2, '0')
 
-export default function TopBar({ status, hudOpen, onToggleHud, children }) {
+export default function TopBar({ status, hudOpen, fxOn = true, onToggleFx, onToggleHud, children }) {
   const now = useClock()
 
   return (
@@ -27,6 +27,17 @@ export default function TopBar({ status, hudOpen, onToggleHud, children }) {
           {pad(now.getDate())} {MONTHS[now.getMonth()]} {now.getFullYear()}
         </span>
         {children}
+        {onToggleFx && (
+          <button
+            type="button"
+            className={`fx-toggle ${fxOn ? 'on' : ''}`}
+            onClick={onToggleFx}
+            aria-pressed={fxOn}
+            title={fxOn ? 'Dim glow and reduce effects' : 'Restore full glow'}
+          >
+            FX
+          </button>
+        )}
         <button
           className="hud-toggle"
           onClick={onToggleHud}

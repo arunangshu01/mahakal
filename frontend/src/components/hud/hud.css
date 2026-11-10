@@ -95,6 +95,29 @@
   color: #02060d;
 }
 
+.fx-toggle {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0 12px;
+  align-items: center;
+  justify-content: center;
+  font: 600 11px var(--display);
+  letter-spacing: 2px;
+  color: rgba(var(--accent-rgb), 0.6);
+  background: transparent;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.fx-toggle.on {
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+  border-color: rgba(var(--accent-rgb), 0.6);
+}
+.fx-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
 /* ---------- Account ---------- */
 .account {
   display: flex;
