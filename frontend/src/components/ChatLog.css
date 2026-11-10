@@ -112,6 +112,26 @@
   border-radius: 50%;
   box-shadow: 0 4px 18px #0008;
 }
+.export-chat {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #0a1a24;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  border-radius: 50%;
+  color: var(--accent);
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 4px 18px #0008;
+}
+.export-chat:hover { background: rgba(var(--accent-rgb), 0.12); }
+.export-chat:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.export-chat svg { width: 17px; height: 17px; }
 
 /* Markdown inside assistant replies */
 .msg.ai p { margin: 0 0 14px; }
@@ -163,7 +183,8 @@
 /* 44px touch targets */
 @media (pointer: coarse) {
   .chat-copy,
-  .jump-latest { width: 44px; height: 44px; }
+  .jump-latest,
+  .export-chat { width: 44px; height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .thinking-dot,

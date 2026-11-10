@@ -10,6 +10,7 @@ function ChatIcon({ name }) {
     copy: 'M9 9h12v12H9zM15 5V3H3v12h2',
     check: 'm5 12 4 4L19 6',
     down: 'M12 4v16m-6-6 6 6 6-6',
+    download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
   }
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={paths[name]} /></svg>
 }
@@ -90,6 +91,22 @@ export default function ChatLog({ messages }) {
     ref.current?.scrollTo?.({ top: ref.current.scrollHeight, behavior: 'auto' })
   }
 
+  const exportChat = () => {
+    const body = messages
+      .filter((m) => !m.notice && m.text)
+      .map((m) => `## ${m.from === 'ai' ? ASSISTANT_NAME : 'You'}\n\n${m.text}\n`)
+      .join('\n---\n\n')
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')
+    const blob = new Blob([`# ${ASSISTANT_NAME} transcript\n\n${body}\n`], { type: 'text/markdown' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `mahakal-transcript-${stamp}.md`
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
+  const exportable = messages.some((m) => !m.notice && m.text)
+
   return (
     <div className="chat-thread">
       <div className="log" ref={ref} role="log" aria-label="Conversation" aria-live="polite" onScroll={onScroll}>
@@ -103,6 +120,11 @@ export default function ChatLog({ messages }) {
           </article>
         ))}
       </div>
+      {exportable && (
+        <button type="button" className="export-chat" aria-label="Download transcript" title="Download transcript" onClick={exportChat}>
+          <ChatIcon name="download" />
+        </button>
+      )}
       {!following && messages.length > 0 && (
         <button type="button" className="jump-latest" aria-label="Jump to latest reply" title="Jump to latest reply" onClick={jumpToLatest}>
           <ChatIcon name="down" />

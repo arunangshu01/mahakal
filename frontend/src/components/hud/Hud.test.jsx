@@ -55,3 +55,12 @@ test('Diagnostics renders every metric', () => {
   }
   expect(screen.getByText('INDESTRUCTIBLE')).toBeInTheDocument()
 })
+
+test('TopBar exposes the FX dimmer toggle', async () => {
+  const onToggleFx = vi.fn()
+  render(<TopBar status="idle" hudOpen={false} fxOn={true} onToggleFx={onToggleFx} onToggleHud={() => {}} />)
+  const fx = screen.getByRole('button', { name: 'FX' })
+  expect(fx).toHaveAttribute('aria-pressed', 'true')
+  await userEvent.click(fx)
+  expect(onToggleFx).toHaveBeenCalled()
+})

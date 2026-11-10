@@ -34,6 +34,33 @@ function loadYouTube() {
   return youtubeApiPromise
 }
 
+function youtubeVideoId(value) {
+  try {
+    const url = new URL(value)
+    const id = url.hostname === 'youtu.be'
+      ? url.pathname.slice(1)
+      : ['www.youtube.com', 'youtube.com', 'music.youtube.com'].includes(url.hostname) && url.pathname === '/watch'
+        ? url.searchParams.get('v')
+        : null
+    return /^[\w-]{11}$/.test(id ?? '') ? id : null
+  } catch {
+    return null
+  }
+}
+
+// Approved tracks: the configured song plus any extras in VITE_MUSIC_URLS (comma-separated).
+function buildPlaylist(songUrl) {
+  const extra = (import.meta.env.VITE_MUSIC_URLS || '').split(',').map((u) => u.trim()).filter(Boolean)
+  const seen = new Set()
+  const youtube = [songUrl, ...extra].filter((u) => {
+    const id = youtubeVideoId(u)
+    if (!id || seen.has(id)) return false
+    seen.add(id)
+    return true
+  })
+  return { urls: youtube.length ? youtube : [songUrl], youtube: youtube.length > 0 }
+}
+
 function musicEmbedUrl(value) {
   try {
     const url = new URL(value)
@@ -62,6 +89,8 @@ function MusicIcon({ name }) {
     volume: 'M11 5 6 9H3v6h3l5 4ZM15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14',
     muted: 'M11 5 6 9H3v6h3l5 4ZM16 9l6 6M16 15l6-6',
     external: 'M14 3h7v7m0-7L10 14M10 3H3v18h18v-7',
+    prev: 'M19 20 9 12l10-8ZM5 19V5',
+    next: 'm5 4 10 8-10 8ZM19 5v14',
   }
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={paths[name]} /></svg>
 }
@@ -76,14 +105,20 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   const [track, setTrack] = useState(null)
   const [volume, setVolume] = useState(55)
   const [dismissedNotification, setDismissedNotification] = useState(null)
+  const [songIndex, setSongIndex] = useState(0)
   const notificationActive = notificationId != null && notificationId !== dismissedNotification
   const containerRef = useRef(null)
   const playerRef = useRef(null)
   const baselineRef = useRef(55)
   const wasDuckedRef = useRef(false)
   const restoredRef = useRef(true)
-  const src = musicEmbedUrl(songUrl)
-  const youtube = Boolean(src?.includes('youtube-nocookie.com'))
+  const playlist = buildPlaylist(songUrl)
+  const playlistRef = useRef(playlist)
+  playlistRef.current = playlist
+  const indexRef = useRef(songIndex)
+  indexRef.current = songIndex
+  const src = musicEmbedUrl(playlist.youtube ? playlist.urls[0] : songUrl)
+  const youtube = playlist.youtube && Boolean(src?.includes('youtube-nocookie.com'))
   const currentTrack = open && track?.source === src ? track : null
   const currentSongUrl = currentTrack?.videoId ? `https://www.youtube.com/watch?v=${currentTrack.videoId}` : songUrl
   const ducked = status !== 'idle' || notificationActive
@@ -137,6 +172,8 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
             target.setVolume(duckedRef.current ? Math.min(baselineRef.current, 8) : baselineRef.current)
             wasDuckedRef.current = duckedRef.current
             restoredRef.current = !duckedRef.current
+            const wanted = youtubeVideoId(playlistRef.current.urls[indexRef.current] ?? '')
+            if (wanted) target.cueVideoById?.(wanted)
             setReady(true)
           },
           onStateChange: ({ target, data }) => {
@@ -201,6 +238,13 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
     if (playing) player.pauseVideo()
     else player.playVideo()
   }
+  const skip = (delta) => {
+    const count = playlistRef.current.urls.length
+    const next = (indexRef.current + delta + count) % count
+    setSongIndex(next)
+    const id = youtubeVideoId(playlistRef.current.urls[next] ?? '')
+    if (id) playerRef.current?.loadVideoById?.(id)
+  }
   const toggleMute = () => {
     const player = playerRef.current
     if (!player) return
@@ -220,6 +264,17 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
             </button>
           ) : youtube && (
             <>
+              {playlist.urls.length > 1 && (
+                <>
+                  <button type="button" aria-label="Previous track" title="Previous track" disabled={!ready} onClick={() => skip(-1)}>
+                    <MusicIcon name="prev" />
+                  </button>
+                  <span className="music-count" aria-label={`Track ${songIndex + 1} of ${playlist.urls.length}`}>{songIndex + 1}/{playlist.urls.length}</span>
+                  <button type="button" aria-label="Next track" title="Next track" disabled={!ready} onClick={() => skip(1)}>
+                    <MusicIcon name="next" />
+                  </button>
+                </>
+              )}
               <button type="button" aria-label={playing ? 'Pause music' : 'Play music'} title={playing ? 'Pause music' : 'Play music'} disabled={!ready || Boolean(error)} onClick={togglePlayback}>
                 <MusicIcon name={playing ? 'pause' : 'play'} />
               </button>

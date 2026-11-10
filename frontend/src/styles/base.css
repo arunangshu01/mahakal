@@ -115,6 +115,28 @@ button {
   .corners i { width: 22px; height: 22px; }
 }
 
+/* ---------- Calm mode: FX toggle dims glow and stops decorative pulses ---------- */
+.app[data-fx='off']::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  background: rgba(0, 0, 0, 0.32);
+  pointer-events: none;
+}
+.app[data-fx='off'] .glitch,
+.app[data-fx='off'] .clock,
+.app[data-fx='off'] .status { text-shadow: none; }
+.app[data-fx='off'] .corners i { opacity: 0.3; animation: none; }
+.app[data-fx='off'] .dot { box-shadow: none; }
+.app[data-fx='off'] .glitch::before,
+.app[data-fx='off'] .glitch::after { display: none; }
+.app[data-fx='off'] .topbar::after,
+.app[data-fx='off'] .command-bar::after,
+.app[data-fx='off'] .panel::before,
+.app[data-fx='off'] .status-bracket,
+.app[data-fx='off'] .dot { animation: none; }
+
 /* ---------- Shared keyframes ---------- */
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes blink { 50% { opacity: 0.25; } }
