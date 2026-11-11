@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './MusicPlayer.css'
 
 const DEFAULT_SONG_URL = 'https://music.youtube.com/watch?v=STq6tE6un6E'
@@ -124,11 +124,9 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   const baselineRef = useRef(55)
   const wasDuckedRef = useRef(false)
   const restoredRef = useRef(true)
-  const playlist = buildPlaylist(songUrl)
+  const playlist = useMemo(() => buildPlaylist(songUrl), [songUrl])
   const playlistRef = useRef(playlist)
-  playlistRef.current = playlist
   const indexRef = useRef(songIndex)
-  indexRef.current = songIndex
   const src = musicEmbedUrl(playlist.youtube ? playlist.urls[0] : songUrl)
   const youtube = playlist.youtube && Boolean(src?.includes('youtube-nocookie.com'))
   const currentTrack = open && track?.source === src ? track : null
@@ -139,6 +137,11 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
   useEffect(() => {
     duckedRef.current = ducked
   }, [ducked])
+
+  useEffect(() => {
+    playlistRef.current = playlist
+    indexRef.current = songIndex
+  }, [playlist, songIndex])
 
   useEffect(() => {
     if (notificationId == null) return
@@ -251,10 +254,10 @@ export default function MusicPlayer({ status, notificationId, songUrl = import.m
     else player.playVideo()
   }
   const skip = (delta) => {
-    const count = playlistRef.current.urls.length
-    const next = (indexRef.current + delta + count) % count
+    const count = playlist.urls.length
+    const next = (songIndex + delta + count) % count
     setSongIndex(next)
-    const id = youtubeVideoId(playlistRef.current.urls[next] ?? '')
+    const id = youtubeVideoId(playlist.urls[next] ?? '')
     if (id) playerRef.current?.loadVideoById?.(id)
   }
   const toggleMute = () => {
