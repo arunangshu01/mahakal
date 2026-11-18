@@ -79,7 +79,7 @@ MAX_TOOL_ROUNDS = 4
 MAX_MEMORIES = 30
 MAX_MEMORY_LENGTH = 200
 TOOL_HTTP_TIMEOUT_SECONDS = 6
-TOOL_USER_AGENT = 'MAHAKAL/1.0 (https://mahakal-ai.web.app)'
+TOOL_USER_AGENT = 'MAHAKAL/1.0 (https://mahakal.arunangshupramanik.com)'
 
 SYSTEM_PROMPT = (
     f"You are {ASSISTANT_NAME}, a personal AI assistant — a Modular Agentic Hub for "

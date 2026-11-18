@@ -35,7 +35,7 @@ jobs:
     # and every deploy waits for your approval.
     environment:
       name: production
-      url: https://mahakal-ai.web.app
+      url: https://mahakal.arunangshupramanik.com
     steps:
       - name: Check deployment variables
         env:
@@ -107,3 +107,4 @@ jobs:
       - name: Smoke test
         run: |
           curl --fail --silent --show-error https://mahakal-ai.web.app/mahakal/api/v1/health
+          curl --fail --silent --show-error https://mahakal.arunangshupramanik.com/mahakal/api/v1/health

@@ -5,7 +5,7 @@
 A personal voice AI assistant with a JARVIS-style HUD, built entirely on free tiers.
 Tap the reactor core and talk, or type a command. It answers out loud.
 
-Live at **https://mahakal-ai.web.app** once deployed (see [docs/deploy-gcp.md](docs/deploy-gcp.md)).
+Live at **https://mahakal.arunangshupramanik.com** once deployed (see [docs/deploy-gcp.md](docs/deploy-gcp.md)).
 
 ## Stack
 
