@@ -33,7 +33,7 @@ CI (`.github/workflows/ci.yml`) runs the same on every PR.
 - `CreatorMark` is the creator attribution card ("Created by Arunangshu Pramanik", GitHub/email icon links). It sits bottom-left beside the music dock on desktop, becomes a full-width footer row below the dock on ≤1150px, and hides in short landscape. Both bottom cards share the side panels' 18px margins and full column widths.
 
 ## Deployment (GCP project `mahakal-ai-230925`, region asia-south1)
-- UI: Firebase Hosting site `mahakal-ai` (https://mahakal-ai.web.app); `/mahakal/api/**` is rewritten to Cloud Run service `mahakal-api`.
+- UI: Firebase Hosting site `mahakal-ai` (https://mahakal-ai.web.app, custom domain https://mahakal.arunangshupramanik.com); `/mahakal/api/**` is rewritten to Cloud Run service `mahakal-api`.
 - Data: Firestore `(default)`; collections `conversations/{guest_<id>|user_<sub>}` and `users/{sub}`.
 - Firebase Hosting only forwards the cookie named `__session` to Cloud Run, so the session must stay in that single cookie.
 - `.github/workflows/deploy.yml` deploys after CI passes on `main`; setup steps are in `docs/deploy-gcp.md`.
